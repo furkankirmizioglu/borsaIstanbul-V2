@@ -1,0 +1,30 @@
+package com.borsaistanbul.stockvaluation.dto.entity;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+@Entity
+@Table(name = "COMPANY_INFO")
+@Getter
+@Setter
+public class CompanyInfo {
+    @Id
+    @SequenceGenerator(name = "company_seq",
+            sequenceName = "company_seq",
+            allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE,
+            generator = "company_seq")
+    @Column(name = "GUID")
+    private long guid;
+    @Column(name = "LAST_UPDATED")
+    private long lastUpdated;
+    @Column(name = "TICKER")
+    private String ticker;
+    @Column(name = "COMPANY_NAME")
+    private String companyName;
+    @Column(name = "INDUSTRY")
+    private String industry;
+
+
+}
