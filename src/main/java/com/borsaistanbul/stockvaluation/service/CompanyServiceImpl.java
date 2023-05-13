@@ -1,6 +1,5 @@
 package com.borsaistanbul.stockvaluation.service;
 
-import com.borsaistanbul.stockvaluation.dto.model.Company;
 import com.borsaistanbul.stockvaluation.dto.entity.CompanyInfo;
 import com.borsaistanbul.stockvaluation.repository.CompanyInfoRepository;
 import org.apache.poi.ss.usermodel.Cell;
@@ -9,7 +8,6 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,21 +20,6 @@ public class CompanyServiceImpl implements CompanyService {
 
     public CompanyServiceImpl(CompanyInfoRepository companyInfoRepository) {
         this.companyInfoRepository = companyInfoRepository;
-    }
-
-    @Override
-    public List<Company> getCompanyList() {
-        List<CompanyInfo> output = companyInfoRepository.findAll();
-        List<Company> responseList = new ArrayList<>();
-        for (CompanyInfo info : output) {
-            responseList.add(Company.builder()
-                    .name(info.getCompanyName())
-                    .latestBalanceSheetTerm("202301")
-                    .ticker(info.getTicker())
-                    .industry(info.getIndustry())
-                    .build());
-        }
-        return responseList;
     }
 
     @Override

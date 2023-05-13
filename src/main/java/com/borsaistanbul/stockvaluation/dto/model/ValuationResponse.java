@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-public class Valuation {
+public class ValuationResponse {
     private String ticker;
     private double PEG;
     private double PB;

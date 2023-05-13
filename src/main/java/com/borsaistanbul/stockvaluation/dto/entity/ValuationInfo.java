@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "VALUATION_INFO")
 @Getter
@@ -19,12 +21,12 @@ public class ValuationInfo {
     private long lastUpdated;
     private String ticker;
     private String balanceSheetTerm;
-    private float equity;
-    private float mainEquity;
-    private float initialCapital;
-    private float prevInitialCapital;
-    private float longTermLiabilities;
-    private float ttmNetProfit;
-    private float prevTtmNetProfit;
+    private BigDecimal equity;
+    private BigDecimal mainEquity;
+    private BigDecimal initialCapital;
+    private BigDecimal prevInitialCapital;
+    private BigDecimal longTermLiabilities;
+    private BigDecimal ttmNetProfit;
+    private BigDecimal prevTtmNetProfit;
 
 }

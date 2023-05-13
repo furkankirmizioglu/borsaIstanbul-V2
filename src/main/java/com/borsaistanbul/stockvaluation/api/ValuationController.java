@@ -1,6 +1,6 @@
 package com.borsaistanbul.stockvaluation.api;
 
-import com.borsaistanbul.stockvaluation.dto.model.Valuation;
+import com.borsaistanbul.stockvaluation.dto.model.ValuationResponse;
 import com.borsaistanbul.stockvaluation.service.ValuationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -19,8 +19,8 @@ public class ValuationController {
 
 
     @PostMapping(path = "list")
-    private List<Valuation> valuation(@RequestBody String industry) {
-        List<Valuation> response = service.valuation(industry);
+    private List<ValuationResponse> valuation(@RequestBody String industry) {
+        List<ValuationResponse> response = service.valuation(industry);
         return response;
 
     }
