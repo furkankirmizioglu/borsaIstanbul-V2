@@ -15,4 +15,6 @@ public interface CompanyInfoRepository extends JpaRepository<CompanyInfo, Long> 
     @Query("SELECT C.ticker from CompanyInfo C where C.industry = ?1")
     List<String> findTickerByIndustry(String industry);
 
+    @Query("SELECT C.companyName from CompanyInfo C where C.ticker = ?1")
+    String findCompanyNameByTicker(String ticker);
 }

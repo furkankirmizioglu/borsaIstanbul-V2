@@ -9,7 +9,12 @@ import lombok.Setter;
 @Builder
 public class ValuationResult {
     private String ticker;
-    private double PEG;
+    private String companyName;
+    private String latestBalanceSheetTerm;
+    private double price;
     private double PB;
+    private double PEG;
+    private double longTermDebtToEquity;
     private double finalScore;
+    private String suggestion;
 }
