@@ -23,12 +23,12 @@ public class CompanyServiceImpl implements CompanyService {
     }
 
     @Override
-    public List<String> fetchAllIndustries() {
+    public List<String> listAll() {
 
         List<String> response = companyInfoRepository.fetchAllIndustries();
 
         if (response.isEmpty()) {
-            // Read excel file.
+            // Read Excel file.
             // Initialize CompanyInfo object for each row.
             // Save into COMPANY_INFO table.
             // Execute the query again to get the list.
@@ -49,17 +49,11 @@ public class CompanyServiceImpl implements CompanyService {
                 CompanyInfo info = new CompanyInfo();
                 for (Cell cell : row) {
                     switch (cell.getColumnIndex()) {
-                        case 0:
-                            info.setTicker(cell.getStringCellValue());
-                            break;
-                        case 1:
-                            info.setCompanyName(cell.getStringCellValue());
-                            break;
-                        case 2:
-                            info.setIndustry(cell.getStringCellValue());
-                            break;
-                        default:
-                            break;
+                        case 0 -> info.setTicker(cell.getStringCellValue());
+                        case 1 -> info.setCompanyName(cell.getStringCellValue());
+                        case 2 -> info.setIndustry(cell.getStringCellValue());
+                        default -> {
+                        }
                     }
                 }
                 toSaveList.add(info);
@@ -67,7 +61,7 @@ public class CompanyServiceImpl implements CompanyService {
             companyInfoRepository.saveAll(toSaveList);
 
         } catch (IOException ex) {
-            return;
+            throw new RuntimeException(ex);
         }
     }
 

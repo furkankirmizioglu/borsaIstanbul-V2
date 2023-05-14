@@ -19,9 +19,7 @@ public class IndustryController {
     }
 
     @GetMapping(path = "list")
-    private List<String> fetchAllIndustries() {
-        List<String> response = service.fetchAllIndustries();
-        return response;
-
+    private List<String> listAll() {
+        return service.listAll();
     }
 }

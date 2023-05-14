@@ -7,6 +7,8 @@ import com.borsaistanbul.stockvaluation.repository.CompanyInfoRepository;
 import com.borsaistanbul.stockvaluation.repository.ValuationInfoRepository;
 import com.borsaistanbul.stockvaluation.utils.Utils;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import org.apache.commons.math3.util.Precision;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
@@ -114,7 +116,6 @@ public class ValuationServiceImpl implements ValuationService {
         }
     }
 
-
     private double fetchCurrentPrice(String ticker) {
 
         String url = "https://fintables.com/sirketler/" + ticker;
@@ -139,10 +140,9 @@ public class ValuationServiceImpl implements ValuationService {
         }
     }
 
-
     private List<ValuationResult> scoring(List<ValuationResult> resultList) {
 
-        // PEG bazında puanlama yapılıyor.
+        // Scoring based on PEG ratio.
         int scoreCounter = resultList.size();
         resultList.sort(Comparator.comparing(ValuationResult::getPEG));
         for (ValuationResult x : resultList) {
@@ -155,7 +155,7 @@ public class ValuationServiceImpl implements ValuationService {
             }
             x.setFinalScore(score);
         }
-        // P/B bazında puanlama yapılıyor.
+        // Scoring based on P/B ratio.
         scoreCounter = resultList.size();
         resultList.sort(Comparator.comparing(ValuationResult::getPB));
         for (ValuationResult x : resultList) {
@@ -167,15 +167,38 @@ public class ValuationServiceImpl implements ValuationService {
             x.setFinalScore(score);
         }
 
-        // Toplam puan, şirket sayısı * indikatör sayısına bölünüyor ve 100'e endeksleniyor.
-        resultList.sort(Comparator.comparing(ValuationResult::getFinalScore));
+        // Scoring based on Long Term Debt To Equity.
+        scoreCounter = resultList.size();
+        resultList.sort(Comparator.comparing(ValuationResult::getLongTermDebtToEquity));
         for (ValuationResult x : resultList) {
-            double score = x.getFinalScore() / (resultList.size() * 2) * 100;
+            double score = x.getFinalScore();
+            if (x.getLongTermDebtToEquity() > 0) {
+                score += scoreCounter;
+                scoreCounter--;
+            }
             x.setFinalScore(score);
         }
 
-        // 100'e endesklenmiş skorlar yüksekten düşüğe doğru sıralanıyor.
+        // Total score will divide to companies count multiply by indicator count and indexed to 100.
+        resultList.sort(Comparator.comparing(ValuationResult::getFinalScore));
+        for (ValuationResult x : resultList) {
+            double score = Precision.round(x.getFinalScore() / (resultList.size() * 3) * 100, 2);
+            x.setFinalScore(score);
+        }
+
+        // Total scores will sort by highest to lowest.
         resultList.sort(Comparator.comparing(ValuationResult::getFinalScore).reversed());
+        for (ValuationResult x : resultList) {
+            if (x.getFinalScore() >= 80) {
+                x.setSuggestion("Güçlü Al");
+            } else if (x.getFinalScore() >= 70) {
+                x.setSuggestion("Al");
+            } else if (x.getFinalScore() >= 50) {
+                x.setSuggestion("Nötr");
+            } else {
+                x.setSuggestion("Sat");
+            }
+        }
         return resultList;
     }
 
@@ -183,9 +206,10 @@ public class ValuationServiceImpl implements ValuationService {
     public List<ValuationResult> valuation(String industry) {
 
         List<ValuationResult> valuationResultList = new ArrayList<>();
+        JsonObject object = new Gson().fromJson(industry, JsonObject.class);
 
         // Find all tickers matches with given industry info.
-        List<String> tickerList = companyInfoRepository.findTickerByIndustry(industry);
+        List<String> tickerList = companyInfoRepository.findTickerByIndustry(object.get("industry").getAsString());
 
         for (String ticker : tickerList) {
 
@@ -201,17 +225,23 @@ public class ValuationServiceImpl implements ValuationService {
 
             // Retrieve the last price from FinTables.
             double price = fetchCurrentPrice(ticker);
+            // Query company name from COMPANY_INFO table.
+            String companyName = companyInfoRepository.findCompanyNameByTicker(ticker);
 
-            // All valuation results will be collected into an arraylist.
+            // Valuation results will put into arraylist.
             info.ifPresent(valuationInfo -> valuationResultList.add(
                     ValuationResult.builder()
-                    .ticker(valuationInfo.getTicker())
-                    .PB(Utils.priceToBookRatio(price, valuationInfo))
-                    .PEG(Utils.priceToEarningsGrowth(price, valuationInfo))
-                    .build()));
+                            .ticker(valuationInfo.getTicker())
+                            .price(price)
+                            .companyName(companyName)
+                            .latestBalanceSheetTerm(valuationInfo.getBalanceSheetTerm())
+                            .PB(Utils.priceToBookRatio(price, valuationInfo))
+                            .PEG(Utils.priceToEarningsGrowth(price, valuationInfo))
+                            .longTermDebtToEquity(Utils.longTermDebtToEquity(valuationInfo))
+                            .build()));
         }
 
-        // Sort the valuationResultList by finalScore and send the response to web page.
+        // Sort the valuationResultList by finalScore and send the response to UI.
         return scoring(valuationResultList);
     }
 }
