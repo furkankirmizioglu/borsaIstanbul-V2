@@ -1,19 +1,25 @@
 package com.borsaistanbul.stockvaluation.service;
 
 import com.borsaistanbul.stockvaluation.dto.entity.ValuationInfo;
-import com.borsaistanbul.stockvaluation.dto.model.ValuationResponse;
-import com.borsaistanbul.stockvaluation.dto.model.ValuationRecord;
+import com.borsaistanbul.stockvaluation.dto.model.BalanceSheetRecord;
+import com.borsaistanbul.stockvaluation.dto.model.ValuationResult;
 import com.borsaistanbul.stockvaluation.repository.CompanyInfoRepository;
 import com.borsaistanbul.stockvaluation.repository.ValuationInfoRepository;
+import com.borsaistanbul.stockvaluation.utils.Utils;
 import com.google.gson.Gson;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.jsoup.*;
-import org.jsoup.nodes.*;
-import org.json.*;
 import org.springframework.stereotype.Service;
+
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ValuationServiceImpl implements ValuationService {
@@ -28,40 +34,54 @@ public class ValuationServiceImpl implements ValuationService {
         this.valuationInfoRepository = valuationInfoRepository;
     }
 
-    private double priceToEarningsGrowth(double closePrice, ValuationInfo info) {
-        double EPS_2 = info.getTtmNetProfit().doubleValue() / info.getInitialCapital().doubleValue();
-        double EPS_1 = info.getPrevTtmNetProfit().doubleValue() / info.getPrevInitialCapital().doubleValue();
-        double EPS_GROWTH_RATE = EPS_2 / EPS_1 - 1;
-        double PE = closePrice / EPS_2;
-        double priceToEarningsGrowth = PE / EPS_GROWTH_RATE;
-        return priceToEarningsGrowth;
+    private void createValuationInfoEntity(String ticker,
+                                           String balanceSheetTerm,
+                                           List<BalanceSheetRecord> balanceSheetRecordList) {
+
+        ValuationInfo entity = new ValuationInfo();
+        for (BalanceSheetRecord r : balanceSheetRecordList) {
+            switch (r.getLabel()) {
+                case "Özkaynaklar" -> entity.setEquity(Utils.stringToBigDecimal(r.getValues().get(0)));
+                case "Ana Ortaklığa Ait Özkaynaklar" ->
+                        entity.setMainEquity(Utils.stringToBigDecimal(r.getValues().get(0)));
+                case "Ödenmiş Sermaye" -> {
+                    entity.setInitialCapital(Utils.stringToBigDecimal(r.getValues().get(0)));
+                    entity.setPrevInitialCapital(Utils.stringToBigDecimal(r.getValues().get(1)));
+                }
+                case "Uzun Vadeli Yükümlülükler" ->
+                        entity.setLongTermLiabilities(Utils.stringToBigDecimal(r.getValues().get(0)));
+                case "Dönem Net Kar/Zararı" -> {
+                    BigDecimal netProfit1 = Utils.stringToBigDecimal(r.getQuarter_values().get(0));
+                    BigDecimal netProfit2 = Utils.stringToBigDecimal(r.getQuarter_values().get(1));
+                    BigDecimal netProfit3 = Utils.stringToBigDecimal(r.getQuarter_values().get(2));
+                    BigDecimal netProfit4 = Utils.stringToBigDecimal(r.getQuarter_values().get(3));
+                    BigDecimal netProfit5 = Utils.stringToBigDecimal(r.getQuarter_values().get(4));
+
+                    entity.setTtmNetProfit(netProfit1.add(netProfit2.add(netProfit3.add(netProfit4))));
+                    entity.setPrevTtmNetProfit(netProfit2.add(netProfit3.add(netProfit4.add(netProfit5))));
+                }
+            }
+        }
+
+        entity.setTicker(ticker);
+        entity.setBalanceSheetTerm(balanceSheetTerm);
+        entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
+        valuationInfoRepository.save(entity);
     }
 
-    private double priceToBookRatio(double closePrice, ValuationInfo info) {
-        double marketValue = info.getInitialCapital().doubleValue() * closePrice;
-        double priceToBookRatio = marketValue / info.getMainEquity().doubleValue();
-        return priceToBookRatio;
-    }
-
-    private void webScrapingFunc(String ticker) {
-
+    private void webScraper(String ticker) {
         try {
-
-            ValuationInfo entity = new ValuationInfo();
-            entity.setTicker(ticker);
             Gson gson = new Gson();
-            ArrayList<ValuationRecord> recordList = new ArrayList<>();
+            List<BalanceSheetRecord> balanceSheetRecordList = new ArrayList<>();
 
             // Concat the default url with stock ticker to initialize target URL.
-            String url = "https://fintables.com/sirketler/" + ticker + "/finansal-tablolar/bilanco";
+            String balanceSheetUrl = "https://fintables.com/sirketler/" + ticker + "/finansal-tablolar/bilanco";
 
             // Connect to the source to retrieve balance sheet information.
-            Document doc = Jsoup.connect(url).timeout(10000).get();
+            Document doc = Jsoup.connect(balanceSheetUrl).timeout(10000).get();
 
             // Balance sheet values will return in a script named "__NEXT_DATA__"
             // Convert this script into a JSON file to parse the values.
-            System.out.println(doc.select("#__NEXT_DATA__").get(0).data());
-
             JSONArray balanceSheetRows = new JSONObject(doc.select("#__NEXT_DATA__").get(0).data())
                     .getJSONObject("props")
                     .getJSONObject("pageProps")
@@ -71,27 +91,10 @@ public class ValuationServiceImpl implements ValuationService {
 
             // Iterating the jsonArray to set the values into an arraylist type of ValuationRecord
             for (int x = 0; x < balanceSheetRows.length(); x++) {
-                ValuationRecord record = gson.fromJson(balanceSheetRows.get(x).toString(), ValuationRecord.class);
-                recordList.add(record);
+                balanceSheetRecordList.add(gson.fromJson(balanceSheetRows.get(x).toString(), BalanceSheetRecord.class));
             }
 
-            for (ValuationRecord r : recordList) {
-                switch (r.getLabel()) {
-                    case "Özkaynaklar" -> entity.setEquity(new BigDecimal(r.getValues().get(0)));
-                    case "Ana Ortaklığa Ait Özkaynaklar" -> entity.setMainEquity(new BigDecimal(r.getValues().get(0)));
-                    case "Ödenmiş Sermaye" -> {
-                        entity.setInitialCapital(new BigDecimal(r.getValues().get(0)));
-                        entity.setPrevInitialCapital(new BigDecimal(r.getValues().get(1)));
-                    }
-                    case "Uzun Vadeli Yükümlülükler" ->
-                            entity.setLongTermLiabilities(new BigDecimal(r.getValues().get(0)));
-                    case "Dönem Net Kar/Zararı" -> {
-                        entity.setTtmNetProfit(new BigDecimal(r.getValues().get(0)));
-                        entity.setPrevTtmNetProfit(new BigDecimal(r.getValues().get(1)));
-                    }
-                }
-            }
-
+            // Fetch the balance sheet term from doc object.
             JSONObject bsTerm = new JSONObject(doc.select("#__NEXT_DATA__").get(0).data())
                     .getJSONObject("props")
                     .getJSONObject("pageProps")
@@ -100,47 +103,115 @@ public class ValuationServiceImpl implements ValuationService {
                     .getJSONArray("periods")
                     .getJSONObject(0);
 
-            entity.setBalanceSheetTerm(bsTerm.get("year") + "/" + bsTerm.get("month"));
-            // TODO -> You have to write a function that returns current datetime as long and
-            //  pass it to the lastUpdated field of entity.
+            String balanceSheetTerm = bsTerm.get("year") + "/" + bsTerm.get("month");
 
-            valuationInfoRepository.save(entity);
+            // Pass the valuation record list and save the necessary data to database.
+            createValuationInfoEntity(ticker, balanceSheetTerm, balanceSheetRecordList);
 
         } catch (IOException ex) {
+            // TODO -> I need a type of exception for valuationService.
+            throw new RuntimeException(ex);
         }
     }
 
-    @Override
-    public List<ValuationResponse> valuation(String industry) {
 
-        List<ValuationResponse> valuations = new ArrayList<>();
+    private double fetchCurrentPrice(String ticker) {
+
+        String url = "https://fintables.com/sirketler/" + ticker;
+
+        // Connect to the source to retrieve balance sheet information.
+        Document doc;
+        try {
+            doc = Jsoup.connect(url).timeout(10000).get();
+            // Balance sheet values will return in a script named "__NEXT_DATA__"
+            // Convert this script into a JSON file to parse the values.
+
+            String currentPrice = new JSONObject(doc.select("#__NEXT_DATA__").get(0).data())
+                    .getJSONObject("props")
+                    .getJSONObject("pageProps")
+                    .getJSONObject("company")
+                    .get("price").toString();
+
+            return Double.parseDouble(currentPrice);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    private List<ValuationResult> scoring(List<ValuationResult> resultList) {
+
+        // PEG bazında puanlama yapılıyor.
+        int scoreCounter = resultList.size();
+        resultList.sort(Comparator.comparing(ValuationResult::getPEG));
+        for (ValuationResult x : resultList) {
+            int score;
+            if (x.getPEG() > 0) {
+                score = scoreCounter;
+                scoreCounter--;
+            } else {
+                score = 0;
+            }
+            x.setFinalScore(score);
+        }
+        // P/B bazında puanlama yapılıyor.
+        scoreCounter = resultList.size();
+        resultList.sort(Comparator.comparing(ValuationResult::getPB));
+        for (ValuationResult x : resultList) {
+            double score = x.getFinalScore();
+            if (x.getPB() > 0) {
+                score += scoreCounter;
+                scoreCounter--;
+            }
+            x.setFinalScore(score);
+        }
+
+        // Toplam puan, şirket sayısı * indikatör sayısına bölünüyor ve 100'e endeksleniyor.
+        resultList.sort(Comparator.comparing(ValuationResult::getFinalScore));
+        for (ValuationResult x : resultList) {
+            double score = x.getFinalScore() / (resultList.size() * 2) * 100;
+            x.setFinalScore(score);
+        }
+
+        // 100'e endesklenmiş skorlar yüksekten düşüğe doğru sıralanıyor.
+        resultList.sort(Comparator.comparing(ValuationResult::getFinalScore).reversed());
+        return resultList;
+    }
+
+    @Override
+    public List<ValuationResult> valuation(String industry) {
+
+        List<ValuationResult> valuationResultList = new ArrayList<>();
 
         // Find all tickers matches with given industry info.
         List<String> tickerList = companyInfoRepository.findTickerByIndustry(industry);
 
         for (String ticker : tickerList) {
 
-            //Go to VALUATION_INFO table for valuation information.
+            // Query VALUATION_INFO table for valuation information.
             Optional<ValuationInfo> info = valuationInfoRepository.findAllByTicker(ticker);
 
+            // If response is null,
+            // then we have to fetch balance sheet data from FinTables, insert to database and inquiry again.
             if (info.isEmpty()) {
-                webScrapingFunc(ticker);
+                webScraper(ticker);
                 info = valuationInfoRepository.findAllByTicker(ticker);
             }
 
-            // TODO -> Calculate the PE, PEG, and PB ratios.
-            // TODO -> You have to fetch the current price of stock.
-            valuations.add(ValuationResponse.builder()
-                    .ticker(info.get().getTicker())
-                    .PB(priceToBookRatio(61.8, info.get()))
-                    .PEG(priceToEarningsGrowth(61.8, info.get()))
-                    .build());
+            // Retrieve the last price from FinTables.
+            double price = fetchCurrentPrice(ticker);
 
-            // TODO -> Score the tickers sort on their values.
-            Collections.sort(valuations, Comparator.comparing(ValuationResponse::getPEG));
-
+            // All valuation results will be collected into an arraylist.
+            info.ifPresent(valuationInfo -> valuationResultList.add(
+                    ValuationResult.builder()
+                    .ticker(valuationInfo.getTicker())
+                    .PB(Utils.priceToBookRatio(price, valuationInfo))
+                    .PEG(Utils.priceToEarningsGrowth(price, valuationInfo))
+                    .build()));
         }
 
-        return valuations;
+        // Sort the valuationResultList by finalScore and send the response to web page.
+        return scoring(valuationResultList);
     }
 }

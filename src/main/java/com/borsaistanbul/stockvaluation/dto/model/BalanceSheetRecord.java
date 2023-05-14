@@ -9,7 +9,7 @@ import java.util.ArrayList;
 @Getter
 @Setter
 @Builder
-public class ValuationRecord {
+public class BalanceSheetRecord {
 
     private String label;
     private int level;

@@ -7,9 +7,9 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-public class ValuationResponse {
+public class ValuationResult {
     private String ticker;
     private double PEG;
     private double PB;
-    private int finalScore;
+    private double finalScore;
 }
