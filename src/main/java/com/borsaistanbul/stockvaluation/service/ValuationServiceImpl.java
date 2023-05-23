@@ -41,9 +41,81 @@ public class ValuationServiceImpl implements ValuationService {
         this.valuationInfoRepository = valuationInfoRepository;
     }
 
-    private void createValuationInfoEntity(String ticker,
-                                           String balanceSheetTerm,
-                                           List<BalanceSheetRecord> balanceSheetRecordList) {
+    private void saveValuationInfoInsurance(String ticker,
+                                          String balanceSheetTerm,
+                                          List<BalanceSheetRecord> balanceSheetRecordList) {
+        ValuationInfo entity = new ValuationInfo();
+        for (BalanceSheetRecord r : balanceSheetRecordList) {
+            switch (r.getLabel()) {
+                case "ÖZKAYNAKLAR" -> {
+                    entity.setEquity(Utils.stringToBigDecimal(r.getValues().get(0)));
+                    entity.setMainEquity(entity.getEquity());
+                }
+                case "Ödenmiş Sermaye" -> {
+                    entity.setInitialCapital(Utils.stringToBigDecimal(r.getValues().get(0)));
+                    entity.setPrevInitialCapital(Utils.stringToBigDecimal(r.getValues().get(4)));
+                }
+                case "UZUN VADELİ YÜKÜMLÜLÜKLER" ->
+                        entity.setLongTermLiabilities(Utils.stringToBigDecimal(r.getValues().get(0)));
+                case "NET DÖNEM KARI (ZARARI)" -> {
+                    BigDecimal netProfit1 = Utils.stringToBigDecimal(r.getQuarter_values().get(0));
+                    BigDecimal netProfit2 = Utils.stringToBigDecimal(r.getQuarter_values().get(1));
+                    BigDecimal netProfit3 = Utils.stringToBigDecimal(r.getQuarter_values().get(2));
+                    BigDecimal netProfit4 = Utils.stringToBigDecimal(r.getQuarter_values().get(3));
+                    BigDecimal netProfit5 = Utils.stringToBigDecimal(r.getQuarter_values().get(4));
+
+                    entity.setTtmNetProfit(netProfit1.add(netProfit2.add(netProfit3.add(netProfit4))));
+                    entity.setPrevTtmNetProfit(netProfit2.add(netProfit3.add(netProfit4.add(netProfit5))));
+                }
+            }
+        }
+
+        entity.setTicker(ticker);
+        entity.setBalanceSheetTerm(balanceSheetTerm);
+        entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
+        valuationInfoRepository.save(entity);
+
+    }
+
+    private void saveValuationInfoBanking(String ticker,
+                                          String balanceSheetTerm,
+                                          List<BalanceSheetRecord> balanceSheetRecordList) {
+        ValuationInfo entity = new ValuationInfo();
+        for (BalanceSheetRecord r : balanceSheetRecordList) {
+            switch (r.getLabel()) {
+                case "ÖZKAYNAKLAR" -> {
+                    entity.setEquity(Utils.stringToBigDecimal(r.getValues().get(0)));
+                    entity.setMainEquity(entity.getEquity());
+                }
+                case "Ödenmiş Sermaye" -> {
+                    entity.setInitialCapital(Utils.stringToBigDecimal(r.getValues().get(0)));
+                    entity.setPrevInitialCapital(Utils.stringToBigDecimal(r.getValues().get(4)));
+                }
+                case "Para Piyasasına Borçlar" ->
+                        entity.setLongTermLiabilities(Utils.stringToBigDecimal(r.getValues().get(0)));
+                case "Dönem Net Kâr veya Zararı" -> {
+                    BigDecimal netProfit1 = Utils.stringToBigDecimal(r.getQuarter_values().get(0));
+                    BigDecimal netProfit2 = Utils.stringToBigDecimal(r.getQuarter_values().get(1));
+                    BigDecimal netProfit3 = Utils.stringToBigDecimal(r.getQuarter_values().get(2));
+                    BigDecimal netProfit4 = Utils.stringToBigDecimal(r.getQuarter_values().get(3));
+                    BigDecimal netProfit5 = Utils.stringToBigDecimal(r.getQuarter_values().get(4));
+
+                    entity.setTtmNetProfit(netProfit1.add(netProfit2.add(netProfit3.add(netProfit4))));
+                    entity.setPrevTtmNetProfit(netProfit2.add(netProfit3.add(netProfit4.add(netProfit5))));
+                }
+            }
+        }
+
+        entity.setTicker(ticker);
+        entity.setBalanceSheetTerm(balanceSheetTerm);
+        entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
+        valuationInfoRepository.save(entity);
+
+    }
+
+    private void saveValuationInfo(String ticker,
+                                   String balanceSheetTerm,
+                                   List<BalanceSheetRecord> balanceSheetRecordList) {
 
         ValuationInfo entity = new ValuationInfo();
         for (BalanceSheetRecord r : balanceSheetRecordList) {
@@ -76,7 +148,7 @@ public class ValuationServiceImpl implements ValuationService {
         valuationInfoRepository.save(entity);
     }
 
-    private void webScraper(String ticker) {
+    private void webScraper(String ticker, String industry) {
         try {
             Gson gson = new Gson();
             List<BalanceSheetRecord> balanceSheetRecordList = new ArrayList<>();
@@ -112,8 +184,14 @@ public class ValuationServiceImpl implements ValuationService {
 
             String balanceSheetTerm = bsTerm.get("year") + "/" + bsTerm.get("month");
 
-            // Pass the valuation record list and save the necessary data to database.
-            createValuationInfoEntity(ticker, balanceSheetTerm, balanceSheetRecordList);
+            // Pass the valuation record list and save the necessary data to database based on industry.
+            if (industry.equals("Bankacılık") || industry.equals("Aracı Kurumlar")) {
+                saveValuationInfoBanking(ticker, balanceSheetTerm, balanceSheetRecordList);
+            } else if (industry.equals("Sigorta")) {
+                saveValuationInfoInsurance(ticker, balanceSheetTerm, balanceSheetRecordList);
+            } else {
+                saveValuationInfo(ticker, balanceSheetTerm, balanceSheetRecordList);
+            }
 
         } catch (IOException ex) {
             // TODO -> I need a type of exception for valuationService.
@@ -205,9 +283,10 @@ public class ValuationServiceImpl implements ValuationService {
 
         List<ValuationResult> valuationResultList = new ArrayList<>();
         JsonObject object = new Gson().fromJson(industry, JsonObject.class);
+        industry = object.get("industry").getAsString();
 
         // Find all tickers matches with given industry info.
-        List<String> tickerList = companyInfoRepository.findTickerByIndustry(object.get("industry").getAsString());
+        List<String> tickerList = companyInfoRepository.findTickerByIndustry(industry);
 
         for (String ticker : tickerList) {
 
@@ -217,7 +296,7 @@ public class ValuationServiceImpl implements ValuationService {
             // If response is null,
             // then we have to fetch balance sheet data from FinTables, insert to database and inquiry again.
             if (info.isEmpty()) {
-                webScraper(ticker);
+                webScraper(ticker, industry);
                 info = valuationInfoRepository.findAllByTicker(ticker);
             }
 
