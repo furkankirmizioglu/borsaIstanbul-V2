@@ -14,7 +14,12 @@ import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -48,7 +53,7 @@ public class ValuationServiceImpl implements ValuationService {
                         entity.setMainEquity(Utils.stringToBigDecimal(r.getValues().get(0)));
                 case "Ödenmiş Sermaye" -> {
                     entity.setInitialCapital(Utils.stringToBigDecimal(r.getValues().get(0)));
-                    entity.setPrevInitialCapital(Utils.stringToBigDecimal(r.getValues().get(1)));
+                    entity.setPrevInitialCapital(Utils.stringToBigDecimal(r.getValues().get(4)));
                 }
                 case "Uzun Vadeli Yükümlülükler" ->
                         entity.setLongTermLiabilities(Utils.stringToBigDecimal(r.getValues().get(0)));
@@ -118,26 +123,19 @@ public class ValuationServiceImpl implements ValuationService {
 
     private double fetchCurrentPrice(String ticker) {
 
-        String url = "https://fintables.com/sirketler/" + ticker;
+        // I created an API that returns current price for stock on Python.
+        // It handles incoming requests from another port and sends its response.
+        String url = "http://localhost:" + 8090 + "/price?ticker=" + ticker;
 
-        // Connect to the source to retrieve balance sheet information.
-        Document doc;
-        try {
-            doc = Jsoup.connect(url).timeout(10000).get();
-            // Balance sheet values will return in a script named "__NEXT_DATA__"
-            // Convert this script into a JSON file to parse the values.
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> requestEntity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> responseEntity = restTemplate.postForEntity(url, requestEntity, String.class);
 
-            String currentPrice = new JSONObject(doc.select("#__NEXT_DATA__").get(0).data())
-                    .getJSONObject("props")
-                    .getJSONObject("pageProps")
-                    .getJSONObject("company")
-                    .get("price").toString();
+        // Extract the price value from the JSON response
+        return Double.parseDouble(new JSONObject(responseEntity.getBody()).get("price").toString());
 
-            return Double.parseDouble(currentPrice);
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private List<ValuationResult> scoring(List<ValuationResult> resultList) {
@@ -179,7 +177,7 @@ public class ValuationServiceImpl implements ValuationService {
             x.setFinalScore(score);
         }
 
-        // Total score will divide to companies count multiply by indicator count and indexed to 100.
+        // Total score will divide to count of companies multiply by indicators count and index to 100.
         resultList.sort(Comparator.comparing(ValuationResult::getFinalScore));
         for (ValuationResult x : resultList) {
             double score = Precision.round(x.getFinalScore() / (resultList.size() * 3) * 100, 2);

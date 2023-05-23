@@ -15,10 +15,10 @@ public class Utils {
     }
 
     public static double priceToEarningsGrowth(double closePrice, ValuationInfo info) {
-        double EPS_2 = info.getTtmNetProfit().doubleValue() / info.getInitialCapital().doubleValue();
-        double EPS_1 = info.getPrevTtmNetProfit().doubleValue() / info.getPrevInitialCapital().doubleValue();
-        double EPS_GROWTH_RATE = (EPS_2 / EPS_1 - 1) * 100;
-        double PE = closePrice / EPS_2;
+        double EPS_2 = Precision.round(info.getTtmNetProfit().doubleValue() / info.getInitialCapital().doubleValue(), 2);
+        double EPS_1 = Precision.round(info.getPrevTtmNetProfit().doubleValue() / info.getPrevInitialCapital().doubleValue(), 2);
+        double EPS_GROWTH_RATE = Precision.round((EPS_2 / EPS_1 - 1) * 100, 2);
+        double PE = Precision.round(closePrice / EPS_2, 2);
         double priceToEarningsGrowth = Precision.round(PE / EPS_GROWTH_RATE, 2);
         return (priceToEarningsGrowth) > 0 ? priceToEarningsGrowth : 0;
     }
