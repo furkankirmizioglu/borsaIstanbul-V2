@@ -5,6 +5,7 @@ import com.borsaistanbul.stockvaluation.dto.model.BalanceSheetRecord;
 import com.borsaistanbul.stockvaluation.dto.model.ValuationResult;
 import com.borsaistanbul.stockvaluation.repository.CompanyInfoRepository;
 import com.borsaistanbul.stockvaluation.repository.ValuationInfoRepository;
+import com.borsaistanbul.stockvaluation.utils.Constants;
 import com.borsaistanbul.stockvaluation.utils.Utils;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -42,31 +43,27 @@ public class ValuationServiceImpl implements ValuationService {
     }
 
     private void saveValuationInfoInsurance(String ticker,
-                                          String balanceSheetTerm,
-                                          List<BalanceSheetRecord> balanceSheetRecordList) {
+                                            String balanceSheetTerm,
+                                            List<BalanceSheetRecord> balanceSheetRecordList) {
         ValuationInfo entity = new ValuationInfo();
         for (BalanceSheetRecord r : balanceSheetRecordList) {
-            switch (r.getLabel()) {
-                case "ÖZKAYNAKLAR" -> {
-                    entity.setEquity(Utils.stringToBigDecimal(r.getValues().get(0)));
-                    entity.setMainEquity(entity.getEquity());
-                }
-                case "Ödenmiş Sermaye" -> {
-                    entity.setInitialCapital(Utils.stringToBigDecimal(r.getValues().get(0)));
-                    entity.setPrevInitialCapital(Utils.stringToBigDecimal(r.getValues().get(4)));
-                }
-                case "UZUN VADELİ YÜKÜMLÜLÜKLER" ->
-                        entity.setLongTermLiabilities(Utils.stringToBigDecimal(r.getValues().get(0)));
-                case "NET DÖNEM KARI (ZARARI)" -> {
-                    BigDecimal netProfit1 = Utils.stringToBigDecimal(r.getQuarter_values().get(0));
-                    BigDecimal netProfit2 = Utils.stringToBigDecimal(r.getQuarter_values().get(1));
-                    BigDecimal netProfit3 = Utils.stringToBigDecimal(r.getQuarter_values().get(2));
-                    BigDecimal netProfit4 = Utils.stringToBigDecimal(r.getQuarter_values().get(3));
-                    BigDecimal netProfit5 = Utils.stringToBigDecimal(r.getQuarter_values().get(4));
+            if (r.getLabel().equals(Constants.EQUITIES)) {
+                entity.setEquity(Utils.stringToBigDecimal(r.getValues().get(0)));
+                entity.setMainEquity(entity.getEquity());
+            } else if (r.getLabel().equals(Constants.PAID_CAPITAL)) {
+                entity.setInitialCapital(Utils.stringToBigDecimal(r.getValues().get(0)));
+                entity.setPrevInitialCapital(Utils.stringToBigDecimal(r.getValues().get(4)));
+            } else if (r.getLabel().equals(Constants.LONG_TERM_LIABILITIES)) {
+                entity.setLongTermLiabilities(Utils.stringToBigDecimal(r.getValues().get(0)));
+            } else if (r.getLabel().equals("NET DÖNEM KARI (ZARARI)")) {
+                BigDecimal netProfit1 = Utils.stringToBigDecimal(r.getQuarter_values().get(0));
+                BigDecimal netProfit2 = Utils.stringToBigDecimal(r.getQuarter_values().get(1));
+                BigDecimal netProfit3 = Utils.stringToBigDecimal(r.getQuarter_values().get(2));
+                BigDecimal netProfit4 = Utils.stringToBigDecimal(r.getQuarter_values().get(3));
+                BigDecimal netProfit5 = Utils.stringToBigDecimal(r.getQuarter_values().get(4));
 
-                    entity.setTtmNetProfit(netProfit1.add(netProfit2.add(netProfit3.add(netProfit4))));
-                    entity.setPrevTtmNetProfit(netProfit2.add(netProfit3.add(netProfit4.add(netProfit5))));
-                }
+                entity.setTtmNetProfit(netProfit1.add(netProfit2.add(netProfit3.add(netProfit4))));
+                entity.setPrevTtmNetProfit(netProfit2.add(netProfit3.add(netProfit4.add(netProfit5))));
             }
         }
 
@@ -82,27 +79,22 @@ public class ValuationServiceImpl implements ValuationService {
                                           List<BalanceSheetRecord> balanceSheetRecordList) {
         ValuationInfo entity = new ValuationInfo();
         for (BalanceSheetRecord r : balanceSheetRecordList) {
-            switch (r.getLabel()) {
-                case "ÖZKAYNAKLAR" -> {
-                    entity.setEquity(Utils.stringToBigDecimal(r.getValues().get(0)));
-                    entity.setMainEquity(entity.getEquity());
-                }
-                case "Ödenmiş Sermaye" -> {
-                    entity.setInitialCapital(Utils.stringToBigDecimal(r.getValues().get(0)));
-                    entity.setPrevInitialCapital(Utils.stringToBigDecimal(r.getValues().get(4)));
-                }
-                case "Para Piyasasına Borçlar" ->
-                        entity.setLongTermLiabilities(Utils.stringToBigDecimal(r.getValues().get(0)));
-                case "Dönem Net Kâr veya Zararı" -> {
-                    BigDecimal netProfit1 = Utils.stringToBigDecimal(r.getQuarter_values().get(0));
-                    BigDecimal netProfit2 = Utils.stringToBigDecimal(r.getQuarter_values().get(1));
-                    BigDecimal netProfit3 = Utils.stringToBigDecimal(r.getQuarter_values().get(2));
-                    BigDecimal netProfit4 = Utils.stringToBigDecimal(r.getQuarter_values().get(3));
-                    BigDecimal netProfit5 = Utils.stringToBigDecimal(r.getQuarter_values().get(4));
-
-                    entity.setTtmNetProfit(netProfit1.add(netProfit2.add(netProfit3.add(netProfit4))));
-                    entity.setPrevTtmNetProfit(netProfit2.add(netProfit3.add(netProfit4.add(netProfit5))));
-                }
+            if (r.getLabel().equals(Constants.EQUITIES)) {
+                entity.setEquity(Utils.stringToBigDecimal(r.getValues().get(0)));
+                entity.setMainEquity(entity.getEquity());
+            } else if (r.getLabel().equals(Constants.PAID_CAPITAL)) {
+                entity.setInitialCapital(Utils.stringToBigDecimal(r.getValues().get(0)));
+                entity.setPrevInitialCapital(Utils.stringToBigDecimal(r.getValues().get(4)));
+            } else if (r.getLabel().equals("Para Piyasasına Borçlar")) {
+                entity.setLongTermLiabilities(Utils.stringToBigDecimal(r.getValues().get(0)));
+            } else if (r.getLabel().equals("Dönem Net Kâr veya Zararı")) {
+                BigDecimal netProfit1 = Utils.stringToBigDecimal(r.getQuarter_values().get(0));
+                BigDecimal netProfit2 = Utils.stringToBigDecimal(r.getQuarter_values().get(1));
+                BigDecimal netProfit3 = Utils.stringToBigDecimal(r.getQuarter_values().get(2));
+                BigDecimal netProfit4 = Utils.stringToBigDecimal(r.getQuarter_values().get(3));
+                BigDecimal netProfit5 = Utils.stringToBigDecimal(r.getQuarter_values().get(4));
+                entity.setTtmNetProfit(netProfit1.add(netProfit2.add(netProfit3.add(netProfit4))));
+                entity.setPrevTtmNetProfit(netProfit2.add(netProfit3.add(netProfit4.add(netProfit5))));
             }
         }
 
@@ -119,26 +111,24 @@ public class ValuationServiceImpl implements ValuationService {
 
         ValuationInfo entity = new ValuationInfo();
         for (BalanceSheetRecord r : balanceSheetRecordList) {
-            switch (r.getLabel()) {
-                case "Özkaynaklar" -> entity.setEquity(Utils.stringToBigDecimal(r.getValues().get(0)));
-                case "Ana Ortaklığa Ait Özkaynaklar" ->
-                        entity.setMainEquity(Utils.stringToBigDecimal(r.getValues().get(0)));
-                case "Ödenmiş Sermaye" -> {
-                    entity.setInitialCapital(Utils.stringToBigDecimal(r.getValues().get(0)));
-                    entity.setPrevInitialCapital(Utils.stringToBigDecimal(r.getValues().get(4)));
-                }
-                case "Uzun Vadeli Yükümlülükler" ->
-                        entity.setLongTermLiabilities(Utils.stringToBigDecimal(r.getValues().get(0)));
-                case "Dönem Net Kar/Zararı" -> {
-                    BigDecimal netProfit1 = Utils.stringToBigDecimal(r.getQuarter_values().get(0));
-                    BigDecimal netProfit2 = Utils.stringToBigDecimal(r.getQuarter_values().get(1));
-                    BigDecimal netProfit3 = Utils.stringToBigDecimal(r.getQuarter_values().get(2));
-                    BigDecimal netProfit4 = Utils.stringToBigDecimal(r.getQuarter_values().get(3));
-                    BigDecimal netProfit5 = Utils.stringToBigDecimal(r.getQuarter_values().get(4));
+            if (r.getLabel().equals("Özkaynaklar")) {
+                entity.setEquity(Utils.stringToBigDecimal(r.getValues().get(0)));
+            } else if (r.getLabel().equals("Ana Ortaklığa Ait Özkaynaklar")) {
+                entity.setMainEquity(Utils.stringToBigDecimal(r.getValues().get(0)));
+            } else if (r.getLabel().equals(Constants.PAID_CAPITAL)) {
+                entity.setInitialCapital(Utils.stringToBigDecimal(r.getValues().get(0)));
+                entity.setPrevInitialCapital(Utils.stringToBigDecimal(r.getValues().get(4)));
+            } else if (r.getLabel().equals("Uzun Vadeli Yükümlülükler")) {
+                entity.setLongTermLiabilities(Utils.stringToBigDecimal(r.getValues().get(0)));
+            } else if (r.getLabel().equals("Dönem Net Kar/Zararı")) {
+                BigDecimal netProfit1 = Utils.stringToBigDecimal(r.getQuarter_values().get(0));
+                BigDecimal netProfit2 = Utils.stringToBigDecimal(r.getQuarter_values().get(1));
+                BigDecimal netProfit3 = Utils.stringToBigDecimal(r.getQuarter_values().get(2));
+                BigDecimal netProfit4 = Utils.stringToBigDecimal(r.getQuarter_values().get(3));
+                BigDecimal netProfit5 = Utils.stringToBigDecimal(r.getQuarter_values().get(4));
 
-                    entity.setTtmNetProfit(netProfit1.add(netProfit2.add(netProfit3.add(netProfit4))));
-                    entity.setPrevTtmNetProfit(netProfit2.add(netProfit3.add(netProfit4.add(netProfit5))));
-                }
+                entity.setTtmNetProfit(netProfit1.add(netProfit2.add(netProfit3.add(netProfit4))));
+                entity.setPrevTtmNetProfit(netProfit2.add(netProfit3.add(netProfit4.add(netProfit5))));
             }
         }
 
@@ -194,7 +184,6 @@ public class ValuationServiceImpl implements ValuationService {
             }
 
         } catch (IOException ex) {
-            // TODO -> I need a type of exception for valuationService.
             throw new RuntimeException(ex);
         }
     }
@@ -216,44 +205,50 @@ public class ValuationServiceImpl implements ValuationService {
 
     }
 
-    private List<ValuationResult> scoring(List<ValuationResult> resultList) {
 
-        // Scoring based on PEG ratio.
+    // Scoring based on PEG ratio.
+    private void pegScore(List<ValuationResult> resultList) {
         int scoreCounter = resultList.size();
-        resultList.sort(Comparator.comparing(ValuationResult::getPEG));
+        resultList.sort(Comparator.comparing(ValuationResult::getPeg));
         for (ValuationResult x : resultList) {
-            int score;
-            if (x.getPEG() > 0) {
-                score = scoreCounter;
+            if (x.getPeg() > 0) {
+                x.setFinalScore(scoreCounter);
                 scoreCounter--;
             } else {
-                score = 0;
+                x.setFinalScore(0);
             }
-            x.setFinalScore(score);
         }
-        // Scoring based on P/B ratio.
-        scoreCounter = resultList.size();
-        resultList.sort(Comparator.comparing(ValuationResult::getPB));
+    }
+
+    // Scoring based on P/B ratio.
+    private void pbScore(List<ValuationResult> resultList) {
+        int scoreCounter = resultList.size();
+        resultList.sort(Comparator.comparing(ValuationResult::getPb));
         for (ValuationResult x : resultList) {
-            double score = x.getFinalScore();
-            if (x.getPB() > 0) {
-                score += scoreCounter;
+            if (x.getPb() > 0) {
+                x.setFinalScore(x.getFinalScore() + scoreCounter);
                 scoreCounter--;
             }
-            x.setFinalScore(score);
         }
+    }
 
-        // Scoring based on Long Term Debt To Equity.
-        scoreCounter = resultList.size();
+    // Scoring based on Long Term Debt To Equity.
+    private void ltdToEquityScore(List<ValuationResult> resultList) {
+        int scoreCounter = resultList.size();
         resultList.sort(Comparator.comparing(ValuationResult::getLongTermDebtToEquity));
         for (ValuationResult x : resultList) {
-            double score = x.getFinalScore();
             if (x.getLongTermDebtToEquity() > 0) {
-                score += scoreCounter;
+                x.setFinalScore(x.getFinalScore() + scoreCounter);
                 scoreCounter--;
             }
-            x.setFinalScore(score);
         }
+    }
+
+    private void scoring(List<ValuationResult> resultList) {
+
+        pegScore(resultList);
+        pbScore(resultList);
+        ltdToEquityScore(resultList);
 
         // Total score will divide to count of companies multiply by indicators count and index to 100.
         resultList.sort(Comparator.comparing(ValuationResult::getFinalScore));
@@ -275,7 +270,6 @@ public class ValuationServiceImpl implements ValuationService {
                 x.setSuggestion("Sat");
             }
         }
-        return resultList;
     }
 
     @Override
@@ -312,13 +306,14 @@ public class ValuationServiceImpl implements ValuationService {
                             .price(price)
                             .companyName(companyName)
                             .latestBalanceSheetTerm(valuationInfo.getBalanceSheetTerm())
-                            .PB(Utils.priceToBookRatio(price, valuationInfo))
-                            .PEG(Utils.priceToEarningsGrowth(price, valuationInfo))
+                            .pb(Utils.priceToBookRatio(price, valuationInfo))
+                            .peg(Utils.priceToEarningsGrowth(price, valuationInfo))
                             .longTermDebtToEquity(Utils.longTermDebtToEquity(valuationInfo))
                             .build()));
         }
 
         // Sort the valuationResultList by finalScore and send the response to UI.
-        return scoring(valuationResultList);
+        scoring(valuationResultList);
+        return valuationResultList;
     }
 }

@@ -21,7 +21,7 @@ public class IndustryController {
 
     @GetMapping(path = "list")
     @CrossOrigin(origins = "http://localhost:3000")
-    private List<String> listAll() {
+    List<String> listAll() {
         return service.listAll();
     }
 }

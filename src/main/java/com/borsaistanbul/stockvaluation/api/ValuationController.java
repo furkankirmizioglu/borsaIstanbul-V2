@@ -20,7 +20,7 @@ public class ValuationController {
 
     @PostMapping(path = "list")
     @CrossOrigin(origins = "http://localhost:3000")
-    private List<ValuationResult> valuation(@RequestBody String industry) {
+    List<ValuationResult> valuation(@RequestBody String industry) {
         return service.valuation(industry);
 
     }

@@ -12,8 +12,8 @@ public class ValuationResult {
     private String companyName;
     private String latestBalanceSheetTerm;
     private double price;
-    private double PB;
-    private double PEG;
+    private double pb;
+    private double peg;
     private double longTermDebtToEquity;
     private double finalScore;
     private String suggestion;

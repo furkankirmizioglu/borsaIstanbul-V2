@@ -63,10 +63,10 @@ public class CompanyServiceImpl implements CompanyService {
                 toSaveList.add(info);
             }
             companyInfoRepository.saveAll(toSaveList);
-
+            workbook.close();
+            file.close();
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
     }
-
 }
