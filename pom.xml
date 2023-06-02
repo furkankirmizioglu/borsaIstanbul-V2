@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.borsaistanbul</groupId>
-	<artifactId>stockvaluation</artifactId>
+	<artifactId>borsa-istanbul-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>stockvaluation</name>
+	<name>borsa-istanbul-backend</name>
 	<description>Contains API&apos;s for Stock Market Valuation Application</description>
 	<properties>
 		<java.version>20</java.version>

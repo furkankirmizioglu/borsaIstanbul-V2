@@ -2,12 +2,20 @@ package com.borsaistanbul.stockvaluation.service;
 
 import com.borsaistanbul.stockvaluation.dto.entity.CompanyInfo;
 import com.borsaistanbul.stockvaluation.repository.CompanyInfoRepository;
+import com.borsaistanbul.stockvaluation.utils.Constants;
+import com.borsaistanbul.stockvaluation.utils.Utils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,38 +39,65 @@ public class CompanyServiceImpl implements CompanyService {
             // Read Excel file.
             // Initialize CompanyInfo object for each row.
             // Save into COMPANY_INFO table.
+            // Update title for each company.
             // Execute the query again to get the list.
             readExcel();
+            updateCompanyTitle();
             response = companyInfoRepository.fetchAllIndustries();
         }
         return response;
     }
 
+    private void updateCompanyTitle() {
+
+        // Concat the default url with stock ticker to initialize target URL.
+        String balanceSheetUrl = "https://fintables.com/sirketler/KCHOL";
+        // Connect to the source to retrieve balance sheet information.
+
+        try {
+            Document doc = Jsoup.connect(balanceSheetUrl).timeout(10000).get();
+            JSONArray companiesArray = new JSONObject(doc.select(Constants.NEXT_DATA).get(0).data())
+                    .getJSONObject(Constants.PROPS)
+                    .getJSONObject(Constants.PAGE_PROPS)
+                    .getJSONArray("symbols");
+
+            for (int i = 0; i < companiesArray.length(); i++) {
+                companyInfoRepository.updateTitle(
+                        companiesArray.getJSONObject(i).get("code").toString(),
+                        companiesArray.getJSONObject(i).get("title").toString());
+            }
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void readExcel() {
         try {
             List<CompanyInfo> toSaveList = new ArrayList<>();
-            String fileLocation = "D:\\Downloads\\Development\\Spring Boot\\stockvaluation\\src\\main\\resources\\static\\companies.xlsx";
+            String fileLocation = ResourceUtils.getFile("classpath:static/companies.xlsx").toString();
             FileInputStream file = new FileInputStream(fileLocation);
             Workbook workbook = new XSSFWorkbook(file);
             Sheet sheet = workbook.getSheetAt(0);
             for (Row row : sheet) {
                 CompanyInfo info = new CompanyInfo();
                 for (Cell cell : row) {
-                    switch (cell.getColumnIndex()) {
-                        case 0 -> info.setTicker(cell.getStringCellValue());
-                        case 1 -> info.setCompanyName(cell.getStringCellValue());
-                        case 2 -> info.setIndustry(cell.getStringCellValue());
-                        default -> {
-                        }
+                    if (cell.getColumnIndex() == 0) {
+                        info.setTicker(cell.getStringCellValue());
+                    } else if (cell.getColumnIndex() == 1) {
+                        info.setTitle(cell.getStringCellValue());
+                    } else if (cell.getColumnIndex() == 2) {
+                        info.setIndustry(cell.getStringCellValue());
                     }
                 }
+                info.setLastUpdated(Utils.getCurrentDateTimeAsLong());
                 toSaveList.add(info);
             }
             companyInfoRepository.saveAll(toSaveList);
-
+            workbook.close();
+            file.close();
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
     }
-
 }
