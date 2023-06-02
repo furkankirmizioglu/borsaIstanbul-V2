@@ -17,12 +17,16 @@ public class CompanyInfo {
             generator = "company_seq")
     @Column(name = "GUID")
     private long guid;
+
     @Column(name = "LAST_UPDATED")
     private long lastUpdated;
+
     @Column(name = "TICKER")
     private String ticker;
-    @Column(name = "COMPANY_NAME")
-    private String companyName;
+
+    @Column(name = "TITLE")
+    private String title;
+
     @Column(name = "INDUSTRY")
     private String industry;
 

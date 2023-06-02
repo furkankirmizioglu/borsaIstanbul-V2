@@ -2,12 +2,17 @@ package com.borsaistanbul.stockvaluation.service;
 
 import com.borsaistanbul.stockvaluation.dto.entity.CompanyInfo;
 import com.borsaistanbul.stockvaluation.repository.CompanyInfoRepository;
+import com.borsaistanbul.stockvaluation.utils.Constants;
 import com.borsaistanbul.stockvaluation.utils.Utils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
@@ -34,11 +39,37 @@ public class CompanyServiceImpl implements CompanyService {
             // Read Excel file.
             // Initialize CompanyInfo object for each row.
             // Save into COMPANY_INFO table.
+            // Update title for each company.
             // Execute the query again to get the list.
             readExcel();
+            updateCompanyTitle();
             response = companyInfoRepository.fetchAllIndustries();
         }
         return response;
+    }
+
+    private void updateCompanyTitle() {
+
+        // Concat the default url with stock ticker to initialize target URL.
+        String balanceSheetUrl = "https://fintables.com/sirketler/KCHOL";
+        // Connect to the source to retrieve balance sheet information.
+
+        try {
+            Document doc = Jsoup.connect(balanceSheetUrl).timeout(10000).get();
+            JSONArray companiesArray = new JSONObject(doc.select(Constants.NEXT_DATA).get(0).data())
+                    .getJSONObject(Constants.PROPS)
+                    .getJSONObject(Constants.PAGE_PROPS)
+                    .getJSONArray("symbols");
+
+            for (int i = 0; i < companiesArray.length(); i++) {
+                companyInfoRepository.updateTitle(
+                        companiesArray.getJSONObject(i).get("code").toString(),
+                        companiesArray.getJSONObject(i).get("title").toString());
+            }
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void readExcel() {
@@ -54,7 +85,7 @@ public class CompanyServiceImpl implements CompanyService {
                     if (cell.getColumnIndex() == 0) {
                         info.setTicker(cell.getStringCellValue());
                     } else if (cell.getColumnIndex() == 1) {
-                        info.setCompanyName(cell.getStringCellValue());
+                        info.setTitle(cell.getStringCellValue());
                     } else if (cell.getColumnIndex() == 2) {
                         info.setIndustry(cell.getStringCellValue());
                     }

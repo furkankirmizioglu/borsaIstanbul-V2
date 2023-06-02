@@ -14,7 +14,8 @@ public class ValuationResult {
     private double price;
     private double pb;
     private double peg;
-    private double longTermDebtToEquity;
+    private double ebitdaMargin;
+    private double netProfitMargin;
     private double finalScore;
     private String suggestion;
 }
