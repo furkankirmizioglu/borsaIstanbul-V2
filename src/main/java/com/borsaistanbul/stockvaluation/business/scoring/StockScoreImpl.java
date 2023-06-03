@@ -60,17 +60,31 @@ public class StockScoreImpl implements StockScore {
         }
     }
 
+    // Scoring based on net debt to ebitda ratio.
+    public void netDebtToEbitdaScore(List<ValuationResult> resultList) {
+        int scoreCounter = resultList.size();
+        resultList.sort(Comparator.comparing(ValuationResult::getNetDebtToEbitda));
+        for (ValuationResult x : resultList) {
+            if (x.getPb() > 0) {
+                x.setFinalScore(x.getFinalScore() + scoreCounter);
+                scoreCounter--;
+            }
+        }
+    }
+
     public void scoring(List<ValuationResult> resultList) {
 
         pegScore(resultList);
         pbScore(resultList);
         ebitdaMarginScore(resultList);
         netProfitMarginScore(resultList);
+        netDebtToEbitdaScore(resultList);
 
-        // Total score will divide to count of companies multiply by indicators (4) count and index to 100.
+
+        // Total score will divide to count of companies multiply by indicators (5) count and index to 100.
         resultList.sort(Comparator.comparing(ValuationResult::getFinalScore));
         for (ValuationResult x : resultList) {
-            double score = Precision.round(x.getFinalScore() / (resultList.size() * 4) * 100, 0);
+            double score = Precision.round(x.getFinalScore() / (resultList.size() * 5) * 100, 0);
             x.setFinalScore(score);
         }
 

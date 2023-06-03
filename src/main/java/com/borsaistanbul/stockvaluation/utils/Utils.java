@@ -43,4 +43,8 @@ public class Utils {
     public static BigDecimal stringToBigDecimal(String value) {
         return (value != null) ? new BigDecimal(value) : BigDecimal.ZERO;
     }
+
+    public static double netDebtToEbitda(ValuationInfo valuationInfo) {
+        return Precision.round(valuationInfo.getNetDebt().doubleValue() / valuationInfo.getAnnualEbitda().doubleValue(), 2);
+    }
 }

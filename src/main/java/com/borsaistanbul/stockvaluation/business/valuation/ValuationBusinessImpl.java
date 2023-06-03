@@ -72,6 +72,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                             .pb(Utils.priceToBookRatio(price, valuationInfo))
                             .peg(Utils.priceToEarningsGrowth(price, valuationInfo))
                             .ebitdaMargin(Utils.ebitdaMargin(valuationInfo))
+                            .netDebtToEbitda(Utils.netDebtToEbitda(valuationInfo))
                             .netProfitMargin(Utils.netProfitMargin(valuationInfo)).build()));
         }
         return valuationResultList;
@@ -145,13 +146,15 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
             JSONArray quarterSalesJsonArray = new JSONArray(briefReportRows.getJSONObject(0).getJSONObject("data").getJSONArray("values"));
 
+            JSONArray quarterEbitdaJsonArray = new JSONArray(briefReportRows.getJSONObject(1).getJSONObject("data").getJSONArray("values"));
+
+            // Retrieve the last four quarters of sales profits.
             ArrayList<String> quarterSales = new ArrayList<>();
             for (int x = 0; x < quarterSalesJsonArray.length(); x++) {
                 quarterSales.add(gson.fromJson(quarterSalesJsonArray.get(x).toString(), String.class));
             }
 
-            JSONArray quarterEbitdaJsonArray = new JSONArray(briefReportRows.getJSONObject(1).getJSONObject("data").getJSONArray("values"));
-
+            // Retrieve the last four quarters of EBITDA profits.
             ArrayList<String> quarterEbitda = new ArrayList<>();
             for (int x = 0; x < quarterEbitdaJsonArray.length(); x++) {
                 quarterEbitda.add(gson.fromJson(quarterEbitdaJsonArray.get(x).toString(), String.class));
@@ -171,12 +174,69 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                                   List<BalanceSheetRecord> balanceSheetRecordList,
                                   BriefReportRecord briefReportRecord) {
 
-        ValuationInfo entity = new ValuationInfo();
+
+        int donenVarliklarIdx = 0;
+        int duranVarliklarIdx = 0;
+        int kisaVadeliYukumluluklerIdx = 0;
+        int uzunVadeliYukumluluklerIdx = 0;
+        int ozkaynaklarIdx = 0;
+        int toplamKaynaklarIdx = 0;
+
+        // her ana başlığın index bilgisini buradan alıyorum.
+        // Bu bilgileri bilançoyu başlıklarına göre ayrı listelere ayırmak için kullanacağım.
         for (BalanceSheetRecord r : balanceSheetRecordList) {
+            switch (r.getLabel()) {
+                case "Dönen Varlıklar" -> donenVarliklarIdx = balanceSheetRecordList.indexOf(r);
+                case "Duran Varlıklar" -> duranVarliklarIdx = balanceSheetRecordList.indexOf(r);
+                case "Kısa Vadeli Yükümlülükler" -> kisaVadeliYukumluluklerIdx = balanceSheetRecordList.indexOf(r);
+                case "Uzun Vadeli Yükümlülükler" -> uzunVadeliYukumluluklerIdx = balanceSheetRecordList.indexOf(r);
+                case "Özkaynaklar" -> ozkaynaklarIdx = balanceSheetRecordList.indexOf(r);
+                case "TOPLAM KAYNAKLAR" -> toplamKaynaklarIdx = balanceSheetRecordList.indexOf(r);
+                default -> {
+                    // do nothing.
+                }
+            }
+        }
+
+        List<BalanceSheetRecord> donenVarliklar = balanceSheetRecordList.subList(donenVarliklarIdx, duranVarliklarIdx);
+        List<BalanceSheetRecord> kisaVadeliYukumlulukler = balanceSheetRecordList.subList(kisaVadeliYukumluluklerIdx, uzunVadeliYukumluluklerIdx);
+        List<BalanceSheetRecord> uzunVadeliYukumlulukler = balanceSheetRecordList.subList(uzunVadeliYukumluluklerIdx, ozkaynaklarIdx);
+        List<BalanceSheetRecord> ozkaynaklar = balanceSheetRecordList.subList(ozkaynaklarIdx, toplamKaynaklarIdx);
+
+        ValuationInfo entity = new ValuationInfo();
+
+        BigDecimal cashAndEquivalents = BigDecimal.ZERO;
+        BigDecimal financialInvestments = BigDecimal.ZERO;
+        BigDecimal shortTermFinancialLiabilities = BigDecimal.ZERO;
+        BigDecimal longTermFinancialLiabilities = BigDecimal.ZERO;
+
+        for (BalanceSheetRecord r : donenVarliklar) {
+            if (r.getLabel().equals(Constants.CASH_AND_EQUIVALENTS)) {
+                cashAndEquivalents = Utils.stringToBigDecimal(r.getValues().get(0));
+            } else if (r.getLabel().equals(Constants.FINANCIAL_INVESTMENTS)) {
+                financialInvestments = Utils.stringToBigDecimal(r.getValues().get(0));
+            }
+        }
+
+        for (BalanceSheetRecord r : kisaVadeliYukumlulukler) {
+            if (r.getLabel().equals(Constants.FINANCIAL_LIABILITIES)) {
+                shortTermFinancialLiabilities = Utils.stringToBigDecimal(r.getValues().get(0));
+                break;
+            }
+        }
+
+        for (BalanceSheetRecord r : uzunVadeliYukumlulukler) {
+            if (r.getLabel().equals(Constants.FINANCIAL_LIABILITIES)) {
+                longTermFinancialLiabilities = Utils.stringToBigDecimal(r.getValues().get(0));
+                break;
+            }
+        }
+
+        for (BalanceSheetRecord r : ozkaynaklar) {
             switch (r.getLabel()) {
                 case Constants.EQUITIES -> entity.setEquity(Utils.stringToBigDecimal(r.getValues().get(0)));
                 case Constants.PAID_CAPITAL -> entity.setInitialCapital(Utils.stringToBigDecimal(r.getValues().get(0)));
-                case "Dönem Net Kar/Zararı" -> {
+                case Constants.NET_PROFIT_OR_LOSS -> {
                     ArrayList<BigDecimal> profitList = new ArrayList<>();
                     for (int i = 0; i < 8; i++) {
                         BigDecimal value;
@@ -187,22 +247,21 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                         }
                         profitList.add(value);
                     }
-
                     entity.setTtmNetProfit(profitList.get(0)
                             .add(profitList.get(1)
                                     .add(profitList.get(2)
                                             .add(profitList.get(3)))));
-
                     entity.setPrevTtmNetProfit(profitList.get(4)
                             .add(profitList.get(5)
                                     .add(profitList.get(6)
                                             .add(profitList.get(7)))));
                 }
-                default -> {
-                    // do nothing.
+                default -> { // DO NOTHING
                 }
             }
         }
+
+        BigDecimal netDebt = shortTermFinancialLiabilities.add(longTermFinancialLiabilities).subtract(cashAndEquivalents).subtract(financialInvestments);
 
         BigDecimal annualEbitda = Utils.stringToBigDecimal(briefReportRecord.getQuarterlyEbitda().get(4))
                 .add(Utils.stringToBigDecimal(briefReportRecord.getQuarterlyEbitda().get(3)))
@@ -216,6 +275,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
         entity.setAnnualEbitda(annualEbitda);
         entity.setAnnualSalesProfit(annualNetSalesProfit);
+        entity.setNetDebt(netDebt);
         entity.setTicker(ticker);
         entity.setBalanceSheetTerm(balanceSheetTerm);
         entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
@@ -250,9 +310,10 @@ public class ValuationBusinessImpl implements ValuationBusiness {
             }
         }
 
-        // TODO -> Bankacılıkta Favök Marjı ve Kâr Marjı olmaz, bunların değerlemesini ayırmak gerekiyor.
+        // Bankacılıkta Favök Marjı ve Kâr Marjı olmaz, bunların değerlemesini ayırmak gerekiyor.
         entity.setAnnualSalesProfit(BigDecimal.ZERO);
         entity.setAnnualEbitda(BigDecimal.ZERO);
+        entity.setNetDebt(BigDecimal.ZERO);
         entity.setTicker(ticker);
         entity.setBalanceSheetTerm(balanceSheetTerm);
         entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
@@ -290,6 +351,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         // TODO -> Sigortacılıkta Favök Marjı ve Kâr Marjı olmaz, bunların değerlemesini ayırmak gerekiyor.
         entity.setAnnualSalesProfit(BigDecimal.ZERO);
         entity.setAnnualEbitda(BigDecimal.ZERO);
+        entity.setNetDebt(BigDecimal.ZERO);
         entity.setTicker(ticker);
         entity.setBalanceSheetTerm(balanceSheetTerm);
         entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());

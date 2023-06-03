@@ -37,5 +37,7 @@ public class ValuationInfo {
     private BigDecimal ttmNetProfit;
     @Column(name = "PREV_TTM_NET_PROFIT")
     private BigDecimal prevTtmNetProfit;
+    @Column(name = "NET_DEBT")
+    private BigDecimal netDebt;
 
 }

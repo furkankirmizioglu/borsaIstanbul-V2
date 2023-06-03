@@ -16,6 +16,7 @@ public class ValuationResult {
     private double peg;
     private double ebitdaMargin;
     private double netProfitMargin;
+    private double netDebtToEbitda;
     private double finalScore;
     private String suggestion;
 }
