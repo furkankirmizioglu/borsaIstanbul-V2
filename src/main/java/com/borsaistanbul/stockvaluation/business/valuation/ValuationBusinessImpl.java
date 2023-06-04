@@ -274,7 +274,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                 .add(Utils.stringToBigDecimal(briefReportRecord.getQuarterlySales().get(1)));
 
         entity.setAnnualEbitda(annualEbitda);
-        entity.setAnnualSalesProfit(annualNetSalesProfit);
+        entity.setAnnualSales(annualNetSalesProfit);
         entity.setNetDebt(netDebt);
         entity.setTicker(ticker);
         entity.setBalanceSheetTerm(balanceSheetTerm);
@@ -311,7 +311,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         }
 
         // Bankacılıkta Favök Marjı ve Kâr Marjı olmaz, bunların değerlemesini ayırmak gerekiyor.
-        entity.setAnnualSalesProfit(BigDecimal.ZERO);
+        entity.setAnnualSales(BigDecimal.ZERO);
         entity.setAnnualEbitda(BigDecimal.ZERO);
         entity.setNetDebt(BigDecimal.ZERO);
         entity.setTicker(ticker);
@@ -349,7 +349,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         }
 
         // TODO -> Sigortacılıkta Favök Marjı ve Kâr Marjı olmaz, bunların değerlemesini ayırmak gerekiyor.
-        entity.setAnnualSalesProfit(BigDecimal.ZERO);
+        entity.setAnnualSales(BigDecimal.ZERO);
         entity.setAnnualEbitda(BigDecimal.ZERO);
         entity.setNetDebt(BigDecimal.ZERO);
         entity.setTicker(ticker);

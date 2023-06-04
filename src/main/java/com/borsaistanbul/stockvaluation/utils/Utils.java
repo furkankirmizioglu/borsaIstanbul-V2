@@ -33,11 +33,11 @@ public class Utils {
     }
 
     public static double netProfitMargin(ValuationInfo info) {
-        return Precision.round(info.getTtmNetProfit().doubleValue() / info.getAnnualSalesProfit().doubleValue() * 100, 2);
+        return Precision.round(info.getTtmNetProfit().doubleValue() / info.getAnnualSales().doubleValue() * 100, 2);
     }
 
     public static double ebitdaMargin(ValuationInfo info) {
-        return Precision.round(info.getAnnualEbitda().doubleValue() / (info.getAnnualSalesProfit()).doubleValue() * 100, 2);
+        return Precision.round(info.getAnnualEbitda().doubleValue() / (info.getAnnualSales()).doubleValue() * 100, 2);
     }
 
     public static BigDecimal stringToBigDecimal(String value) {

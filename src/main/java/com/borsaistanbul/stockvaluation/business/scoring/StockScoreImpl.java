@@ -91,14 +91,16 @@ public class StockScoreImpl implements StockScore {
         // Total scores will sort by highest to lowest.
         resultList.sort(Comparator.comparing(ValuationResult::getFinalScore).reversed());
         for (ValuationResult x : resultList) {
-            if (x.getFinalScore() >= 80) {
+            if (x.getFinalScore() >= 85) {
                 x.setSuggestion("Güçlü Al");
             } else if (x.getFinalScore() >= 70) {
                 x.setSuggestion("Al");
-            } else if (x.getFinalScore() >= 50) {
+            } else if (x.getFinalScore() >= 55) {
                 x.setSuggestion("Nötr");
-            } else {
+            } else if (x.getFinalScore() >= 40) {
                 x.setSuggestion("Sat");
+            } else {
+                x.setSuggestion("Güçlü Sat");
             }
         }
     }
