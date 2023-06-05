@@ -41,7 +41,7 @@ public class StockScoreImpl implements StockScore {
         int scoreCounter = resultList.size();
         resultList.sort(Comparator.comparing(ValuationResult::getEbitdaMargin).reversed());
         for (ValuationResult x : resultList) {
-            if (x.getPb() > 0) {
+            if (x.getEbitdaMargin() != Double.POSITIVE_INFINITY && x.getEbitdaMargin() != Double.NEGATIVE_INFINITY) {
                 x.setFinalScore(x.getFinalScore() + scoreCounter);
                 scoreCounter--;
             }
@@ -53,7 +53,7 @@ public class StockScoreImpl implements StockScore {
         int scoreCounter = resultList.size();
         resultList.sort(Comparator.comparing(ValuationResult::getNetProfitMargin).reversed());
         for (ValuationResult x : resultList) {
-            if (x.getPb() > 0) {
+            if (x.getNetProfitMargin() != Double.POSITIVE_INFINITY && x.getNetProfitMargin() != Double.NEGATIVE_INFINITY) {
                 x.setFinalScore(x.getFinalScore() + scoreCounter);
                 scoreCounter--;
             }
@@ -65,10 +65,8 @@ public class StockScoreImpl implements StockScore {
         int scoreCounter = resultList.size();
         resultList.sort(Comparator.comparing(ValuationResult::getNetDebtToEbitda));
         for (ValuationResult x : resultList) {
-            if (x.getPb() > 0) {
-                x.setFinalScore(x.getFinalScore() + scoreCounter);
-                scoreCounter--;
-            }
+            x.setFinalScore(x.getFinalScore() + scoreCounter);
+            scoreCounter--;
         }
     }
 
@@ -79,7 +77,6 @@ public class StockScoreImpl implements StockScore {
         ebitdaMarginScore(resultList);
         netProfitMarginScore(resultList);
         netDebtToEbitdaScore(resultList);
-
 
         // Total score will divide to count of companies multiply by indicators (5) count and index to 100.
         resultList.sort(Comparator.comparing(ValuationResult::getFinalScore));
