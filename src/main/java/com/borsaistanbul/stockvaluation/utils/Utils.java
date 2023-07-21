@@ -2,6 +2,7 @@ package com.borsaistanbul.stockvaluation.utils;
 
 import com.borsaistanbul.stockvaluation.dto.entity.ValuationInfo;
 import org.apache.commons.math3.util.Precision;
+import org.apache.poi.ss.usermodel.Row;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -40,8 +41,8 @@ public class Utils {
         return Precision.round(info.getAnnualEbitda().doubleValue() / (info.getAnnualSales()).doubleValue() * 100, 2);
     }
 
-    public static BigDecimal stringToBigDecimal(String value) {
-        return (value != null) ? new BigDecimal(value) : BigDecimal.ZERO;
+    public static BigDecimal cellValue(Row row, int i) {
+        return (row.getCell(i) != null) ? BigDecimal.valueOf(row.getCell(i).getNumericCellValue()) : BigDecimal.ZERO;
     }
 
     public static double netDebtToEbitda(ValuationInfo valuationInfo) {

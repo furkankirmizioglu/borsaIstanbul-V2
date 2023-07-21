@@ -2,23 +2,25 @@ package com.borsaistanbul.stockvaluation.business.valuation;
 
 import com.borsaistanbul.stockvaluation.client.PriceInfoService;
 import com.borsaistanbul.stockvaluation.dto.entity.ValuationInfo;
-import com.borsaistanbul.stockvaluation.dto.model.BalanceSheetRecord;
-import com.borsaistanbul.stockvaluation.dto.model.BriefReportRecord;
 import com.borsaistanbul.stockvaluation.dto.model.ValuationResult;
 import com.borsaistanbul.stockvaluation.repository.CompanyInfoRepository;
 import com.borsaistanbul.stockvaluation.repository.ValuationInfoRepository;
 import com.borsaistanbul.stockvaluation.utils.Constants;
 import com.borsaistanbul.stockvaluation.utils.Utils;
-import com.google.gson.Gson;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +33,6 @@ public class ValuationBusinessImpl implements ValuationBusiness {
     private final ValuationInfoRepository valuationInfoRepository;
     @Autowired
     private final PriceInfoService priceInfoService;
-    private Gson gson;
 
     public ValuationBusinessImpl(CompanyInfoRepository companyInfoRepository,
                                  ValuationInfoRepository valuationInfoRepository,
@@ -80,128 +81,52 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
     @Override
     public void webScraper(String ticker, String industry) {
+
+
         try {
-            gson = new Gson();
-            List<BalanceSheetRecord> balanceSheetRecordList = new ArrayList<>();
+            String urlStr = "https://fintables.com/sirketler/" + ticker + "/finansal-tablolar/excel?currency=";
+            URL url = new URL(urlStr);
+            URLConnection uc = url.openConnection();
+            uc.addRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0");
+            InputStream inputStream = uc.getInputStream();
 
-            // Concat the default url with stock ticker to initialize target URL.
-            String balanceSheetUrl = "https://fintables.com/sirketler/" + ticker + "/finansal-tablolar/bilanco";
-
-            // Connect to the source to retrieve balance sheet information.
-            Document doc = Jsoup.connect(balanceSheetUrl).timeout(10000).get();
-
-            // Balance sheet values will return in a script named "__NEXT_DATA__"
-            // Convert this script into a JSON file to parse the values.
-            JSONArray balanceSheetRows = new JSONObject(doc.select(Constants.NEXT_DATA).get(0).data())
-                    .getJSONObject(Constants.PROPS)
-                    .getJSONObject(Constants.PAGE_PROPS)
-                    .getJSONObject("data")
-                    .getJSONObject("balance")
-                    .getJSONArray("rows");
-
-            // Iterating the jsonArray to set the values into an arraylist type of ValuationRecord
-            for (int x = 0; x < balanceSheetRows.length(); x++) {
-                balanceSheetRecordList.add(gson.fromJson(balanceSheetRows.get(x).toString(), BalanceSheetRecord.class));
+            // Save the Excel file to a local file.
+            String fileName = "report.xlsx";
+            FileOutputStream fileOutputStream = new FileOutputStream(fileName);
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                fileOutputStream.write(buffer, 0, bytesRead);
             }
+            fileOutputStream.close();
 
-            // Fetch the balance sheet term from doc object.
-            JSONObject bsTerm = new JSONObject(doc.select(Constants.NEXT_DATA).get(0).data())
-                    .getJSONObject(Constants.PROPS)
-                    .getJSONObject(Constants.PAGE_PROPS)
-                    .getJSONObject("data")
-                    .getJSONObject("balance")
-                    .getJSONArray("periods")
-                    .getJSONObject(0);
 
-            String balanceSheetTerm = bsTerm.get("year") + "/" + bsTerm.get("month");
+            // Parse the Excel file.
+            XSSFWorkbook workbook = new XSSFWorkbook(fileName);
 
-            BriefReportRecord briefReportRecord = getBriefReportData(ticker);
 
-            // Pass the valuation record list and save the necessary data to database based on industry.
             if (industry.equals("Bankacılık") || industry.equals("Aracı Kurumlar")) {
-                saveValuationInfoBanking(ticker, balanceSheetTerm, balanceSheetRecordList);
+                saveValuationInfoBanking(ticker, workbook);
             } else if (industry.equals("Sigorta")) {
-                saveValuationInfoInsurance(ticker, balanceSheetTerm, balanceSheetRecordList);
+                saveValuationInfoInsurance(ticker, workbook);
             } else {
-                saveValuationInfo(ticker, balanceSheetTerm, balanceSheetRecordList, briefReportRecord);
+                saveValuationInfo(ticker, workbook);
             }
 
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    @Override
-    public BriefReportRecord getBriefReportData(String ticker) {
-        try {
-
-            // Now I'm going to fetch the brief report data.
-            String briefReportUrl = "https://fintables.com/sirketler/" + ticker;
-            // Connect to the source to retrieve brief report information.
-            Document briefRecDoc = Jsoup.connect(briefReportUrl).timeout(10000).get();
-
-            // Brief report values will return in a script named "__NEXT_DATA__"
-            // Convert this script into a JSON array to parse the values.
-            JSONArray briefReportRows = new JSONObject(briefRecDoc.select(Constants.NEXT_DATA).get(0).data()).getJSONObject(Constants.PROPS).getJSONObject(Constants.PAGE_PROPS).getJSONArray("data").getJSONObject(1).getJSONArray("columns");
-
-            JSONArray quarterSalesJsonArray = new JSONArray(briefReportRows.getJSONObject(0).getJSONObject("data").getJSONArray("values"));
-
-            JSONArray quarterEbitdaJsonArray = new JSONArray(briefReportRows.getJSONObject(1).getJSONObject("data").getJSONArray("values"));
-
-            // Retrieve the last four quarters of sales profits.
-            ArrayList<String> quarterSales = new ArrayList<>();
-            for (int x = 0; x < quarterSalesJsonArray.length(); x++) {
-                quarterSales.add(gson.fromJson(quarterSalesJsonArray.get(x).toString(), String.class));
-            }
-
-            // Retrieve the last four quarters of EBITDA profits.
-            ArrayList<String> quarterEbitda = new ArrayList<>();
-            for (int x = 0; x < quarterEbitdaJsonArray.length(); x++) {
-                quarterEbitda.add(gson.fromJson(quarterEbitdaJsonArray.get(x).toString(), String.class));
-            }
-
-            return BriefReportRecord.builder().quarterlyEbitda(quarterEbitda).quarterlySales(quarterSales).build();
-
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
 
     }
 
     @Override
     public void saveValuationInfo(String ticker,
-                                  String balanceSheetTerm,
-                                  List<BalanceSheetRecord> balanceSheetRecordList,
-                                  BriefReportRecord briefReportRecord) {
-
-
-        int donenVarliklarIdx = 0;
-        int duranVarliklarIdx = 0;
-        int kisaVadeliYukumluluklerIdx = 0;
-        int uzunVadeliYukumluluklerIdx = 0;
-        int ozkaynaklarIdx = 0;
-        int toplamKaynaklarIdx = 0;
-
-        // her ana başlığın index bilgisini buradan alıyorum.
-        // Bu bilgileri bilançoyu başlıklarına göre ayrı listelere ayırmak için kullanacağım.
-        for (BalanceSheetRecord r : balanceSheetRecordList) {
-            switch (r.getLabel()) {
-                case "Dönen Varlıklar" -> donenVarliklarIdx = balanceSheetRecordList.indexOf(r);
-                case "Duran Varlıklar" -> duranVarliklarIdx = balanceSheetRecordList.indexOf(r);
-                case "Kısa Vadeli Yükümlülükler" -> kisaVadeliYukumluluklerIdx = balanceSheetRecordList.indexOf(r);
-                case "Uzun Vadeli Yükümlülükler" -> uzunVadeliYukumluluklerIdx = balanceSheetRecordList.indexOf(r);
-                case "Özkaynaklar" -> ozkaynaklarIdx = balanceSheetRecordList.indexOf(r);
-                case "TOPLAM KAYNAKLAR" -> toplamKaynaklarIdx = balanceSheetRecordList.indexOf(r);
-                default -> {
-                    // do nothing.
-                }
-            }
-        }
-
-        List<BalanceSheetRecord> donenVarliklar = balanceSheetRecordList.subList(donenVarliklarIdx, duranVarliklarIdx);
-        List<BalanceSheetRecord> kisaVadeliYukumlulukler = balanceSheetRecordList.subList(kisaVadeliYukumluluklerIdx, uzunVadeliYukumluluklerIdx);
-        List<BalanceSheetRecord> uzunVadeliYukumlulukler = balanceSheetRecordList.subList(uzunVadeliYukumluluklerIdx, ozkaynaklarIdx);
-        List<BalanceSheetRecord> ozkaynaklar = balanceSheetRecordList.subList(ozkaynaklarIdx, toplamKaynaklarIdx);
+                                  XSSFWorkbook workbook) {
 
         ValuationInfo entity = new ValuationInfo();
 
@@ -210,152 +135,230 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         BigDecimal shortTermFinancialLiabilities = BigDecimal.ZERO;
         BigDecimal longTermFinancialLiabilities = BigDecimal.ZERO;
 
-        for (BalanceSheetRecord r : donenVarliklar) {
-            if (r.getLabel().equals(Constants.CASH_AND_EQUIVALENTS)) {
-                cashAndEquivalents = Utils.stringToBigDecimal(r.getValues().get(0));
-            } else if (r.getLabel().equals(Constants.FINANCIAL_INVESTMENTS)) {
-                financialInvestments = Utils.stringToBigDecimal(r.getValues().get(0));
+        BigDecimal grossProfit = BigDecimal.ZERO;
+        BigDecimal administrativeExpenses = BigDecimal.ZERO;
+        BigDecimal marketingSalesDistributionExpenses = BigDecimal.ZERO;
+        BigDecimal researchDevelopmentExpenses = BigDecimal.ZERO;
+
+        BigDecimal depreciationAmortization = BigDecimal.ZERO;
+
+        XSSFSheet balanceSheet = workbook.getSheetAt(0);
+        XSSFSheet annualProfitSheet = workbook.getSheetAt(3);
+        XSSFSheet annualCashFlowSheet = workbook.getSheetAt(6);
+
+        for (int j = 0; j < balanceSheet.getPhysicalNumberOfRows(); j++) {
+
+            Row row = balanceSheet.getRow(j);
+
+            if (row.getCell(0) != null) {
+                switch (row.getCell(0).getStringCellValue().trim()) {
+                    case Constants.TOTAL_SHORT_TERM_LIABILITIES ->
+                            shortTermFinancialLiabilities = Utils.cellValue(row, 1);
+                    case Constants.TOTAL_LONG_TERM_LIABILITIES ->
+                            longTermFinancialLiabilities = Utils.cellValue(row, 1);
+                    case Constants.CASH_AND_EQUIVALENTS -> cashAndEquivalents = Utils.cellValue(row, 1);
+                    case Constants.FINANCIAL_INVESTMENTS -> financialInvestments = Utils.cellValue(row, 1);
+                    case Constants.EQUITIES -> entity.setEquity(Utils.cellValue(row, 1));
+                    case Constants.INITIAL_CAPITAL -> entity.setInitialCapital(Utils.cellValue(row, 1));
+                }
             }
         }
 
-        for (BalanceSheetRecord r : kisaVadeliYukumlulukler) {
-            if (r.getLabel().equals(Constants.FINANCIAL_LIABILITIES)) {
-                shortTermFinancialLiabilities = Utils.stringToBigDecimal(r.getValues().get(0));
-                break;
-            }
-        }
-
-        for (BalanceSheetRecord r : uzunVadeliYukumlulukler) {
-            if (r.getLabel().equals(Constants.FINANCIAL_LIABILITIES)) {
-                longTermFinancialLiabilities = Utils.stringToBigDecimal(r.getValues().get(0));
-                break;
-            }
-        }
-
-        for (BalanceSheetRecord r : ozkaynaklar) {
-            switch (r.getLabel()) {
-                case Constants.EQUITIES -> entity.setEquity(Utils.stringToBigDecimal(r.getValues().get(0)));
-                case Constants.PAID_CAPITAL -> entity.setInitialCapital(Utils.stringToBigDecimal(r.getValues().get(0)));
-                case Constants.NET_PROFIT_OR_LOSS -> {
-                    ArrayList<BigDecimal> profitList = new ArrayList<>();
-                    for (int i = 0; i < 8; i++) {
-                        BigDecimal value;
-                        if (i < r.getQuarter_values().size()) {
-                            value = Utils.stringToBigDecimal(r.getQuarter_values().get(i));
-                        } else {
-                            value = BigDecimal.ZERO;
-                        }
-                        profitList.add(value);
+        for (int i = 0; i < annualProfitSheet.getPhysicalNumberOfRows(); i++) {
+            Row row = annualProfitSheet.getRow(i);
+            if (row.getCell(0) != null) {
+                switch (row.getCell(0).getStringCellValue().trim()) {
+                    case Constants.INCOME_FROM_SALES -> entity.setAnnualSales(Utils.cellValue(row, 1));
+                    case Constants.GROSS_PROFIT -> grossProfit = Utils.cellValue(row, 1);
+                    case Constants.ADMINISTRATIVE_EXPENSES -> administrativeExpenses = Utils.cellValue(row, 1);
+                    case Constants.MARKETING_SALES_DISTRIBUTION_EXPENSES ->
+                            marketingSalesDistributionExpenses = Utils.cellValue(row, 1);
+                    case Constants.RESEARCH_DEVELOPMENT_EXPENSES ->
+                            researchDevelopmentExpenses = Utils.cellValue(row, 1);
+                    case Constants.PARENT_COMPANY_SHARES -> {
+                        entity.setTtmNetProfit(Utils.cellValue(row, 1));
+                        entity.setPrevTtmNetProfit(Utils.cellValue(row, 5));
                     }
-                    entity.setTtmNetProfit(profitList.get(0)
-                            .add(profitList.get(1)
-                                    .add(profitList.get(2)
-                                            .add(profitList.get(3)))));
-                    entity.setPrevTtmNetProfit(profitList.get(4)
-                            .add(profitList.get(5)
-                                    .add(profitList.get(6)
-                                            .add(profitList.get(7)))));
-                }
-                default -> { // DO NOTHING
                 }
             }
         }
 
-        BigDecimal netDebt = shortTermFinancialLiabilities.add(longTermFinancialLiabilities).subtract(cashAndEquivalents).subtract(financialInvestments);
+        for (int k = 0; k < annualCashFlowSheet.getPhysicalNumberOfRows(); k++) {
+            Row row = annualCashFlowSheet.getRow(k);
+            if (row.getCell(0) != null && row.getCell(0).getStringCellValue().trim().equals(Constants.DEPRECIATION_AND_AMORTIZATION)) {
+                depreciationAmortization = Utils.cellValue(row, 1);
+            }
+        }
 
-        BigDecimal annualEbitda = Utils.stringToBigDecimal(briefReportRecord.getQuarterlyEbitda().get(4))
-                .add(Utils.stringToBigDecimal(briefReportRecord.getQuarterlyEbitda().get(3)))
-                .add(Utils.stringToBigDecimal(briefReportRecord.getQuarterlyEbitda().get(2)))
-                .add(Utils.stringToBigDecimal(briefReportRecord.getQuarterlyEbitda().get(1)));
+        BigDecimal netDebt = shortTermFinancialLiabilities.add(longTermFinancialLiabilities)
+                .subtract(cashAndEquivalents).subtract(financialInvestments);
 
-        BigDecimal annualNetSalesProfit = Utils.stringToBigDecimal(briefReportRecord.getQuarterlySales().get(4))
-                .add(Utils.stringToBigDecimal(briefReportRecord.getQuarterlySales().get(3)))
-                .add(Utils.stringToBigDecimal(briefReportRecord.getQuarterlySales().get(2)))
-                .add(Utils.stringToBigDecimal(briefReportRecord.getQuarterlySales().get(1)));
+        BigDecimal annualEbitda = grossProfit.add(administrativeExpenses).add(marketingSalesDistributionExpenses)
+                .add(researchDevelopmentExpenses).add(depreciationAmortization);
 
+        entity.setBalanceSheetTerm(balanceSheet.getRow(0).getCell(1).getStringCellValue());
+        entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
         entity.setAnnualEbitda(annualEbitda);
-        entity.setAnnualSales(annualNetSalesProfit);
+        entity.setTicker(ticker);
         entity.setNetDebt(netDebt);
-        entity.setTicker(ticker);
-        entity.setBalanceSheetTerm(balanceSheetTerm);
-        entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
         valuationInfoRepository.save(entity);
     }
 
     @Override
-    public void saveValuationInfoBanking(String ticker,
-                                         String balanceSheetTerm,
-                                         List<BalanceSheetRecord> balanceSheetRecordList) {
+    public void saveValuationInfoBanking(String ticker, XSSFWorkbook workbook) {
+
         ValuationInfo entity = new ValuationInfo();
-        for (BalanceSheetRecord r : balanceSheetRecordList) {
-            switch (r.getLabel()) {
-                case "Ana Ortaklığa Ait Özkaynaklar" ->
-                        entity.setEquity(Utils.stringToBigDecimal(r.getValues().get(0)));
-                case Constants.PAID_CAPITAL -> entity.setInitialCapital(Utils.stringToBigDecimal(r.getValues().get(0)));
-                case "Dönem Net Kâr veya Zararı" -> {
-                    BigDecimal netProfit1 = Utils.stringToBigDecimal(r.getQuarter_values().get(0));
-                    BigDecimal netProfit2 = Utils.stringToBigDecimal(r.getQuarter_values().get(1));
-                    BigDecimal netProfit3 = Utils.stringToBigDecimal(r.getQuarter_values().get(2));
-                    BigDecimal netProfit4 = Utils.stringToBigDecimal(r.getQuarter_values().get(3));
-                    BigDecimal netProfit5 = Utils.stringToBigDecimal(r.getQuarter_values().get(4));
-                    BigDecimal netProfit6 = Utils.stringToBigDecimal(r.getQuarter_values().get(5));
-                    BigDecimal netProfit7 = Utils.stringToBigDecimal(r.getQuarter_values().get(6));
-                    BigDecimal netProfit8 = Utils.stringToBigDecimal(r.getQuarter_values().get(7));
-                    entity.setTtmNetProfit(netProfit1.add(netProfit2.add(netProfit3.add(netProfit4))));
-                    entity.setPrevTtmNetProfit(netProfit5.add(netProfit6.add(netProfit7.add(netProfit8))));
-                }
-                default -> {
-                    // do nothing.
+
+        BigDecimal cashAndEquivalents = BigDecimal.ZERO;
+        BigDecimal financialInvestments = BigDecimal.ZERO;
+        BigDecimal shortTermFinancialLiabilities = BigDecimal.ZERO;
+        BigDecimal longTermFinancialLiabilities = BigDecimal.ZERO;
+
+        BigDecimal grossProfit = BigDecimal.ZERO;
+        BigDecimal administrativeExpenses = BigDecimal.ZERO;
+        BigDecimal marketingSalesDistributionExpenses = BigDecimal.ZERO;
+        BigDecimal researchDevelopmentExpenses = BigDecimal.ZERO;
+
+        BigDecimal depreciationAmortization = BigDecimal.ZERO;
+
+        XSSFSheet balanceSheet = workbook.getSheetAt(0);
+        XSSFSheet annualProfitSheet = workbook.getSheetAt(3);
+        XSSFSheet annualCashFlowSheet = workbook.getSheetAt(6);
+
+        for (int j = 0; j < balanceSheet.getPhysicalNumberOfRows(); j++) {
+
+            Row row = balanceSheet.getRow(j);
+
+            if (row.getCell(0) != null) {
+                switch (row.getCell(0).getStringCellValue().trim()) {
+                    case Constants.TOTAL_SHORT_TERM_LIABILITIES ->
+                            shortTermFinancialLiabilities = Utils.cellValue(row, 1);
+                    case Constants.TOTAL_LONG_TERM_LIABILITIES ->
+                            longTermFinancialLiabilities = Utils.cellValue(row, 1);
+                    case Constants.CASH_AND_EQUIVALENTS -> cashAndEquivalents = Utils.cellValue(row, 1);
+                    case Constants.FINANCIAL_INVESTMENTS -> financialInvestments = Utils.cellValue(row, 1);
+                    case Constants.EQUITIES -> entity.setEquity(Utils.cellValue(row, 1));
+                    case Constants.INITIAL_CAPITAL -> entity.setInitialCapital(Utils.cellValue(row, 1));
                 }
             }
         }
 
-        // Bankacılıkta Favök Marjı ve Kâr Marjı olmaz, bunların değerlemesini ayırmak gerekiyor.
-        entity.setAnnualSales(BigDecimal.ZERO);
-        entity.setAnnualEbitda(BigDecimal.ZERO);
-        entity.setNetDebt(BigDecimal.ZERO);
-        entity.setTicker(ticker);
-        entity.setBalanceSheetTerm(balanceSheetTerm);
-        entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
-        valuationInfoRepository.save(entity);
+        for (int i = 0; i < annualProfitSheet.getPhysicalNumberOfRows(); i++) {
+            Row row = annualProfitSheet.getRow(i);
+            if (row.getCell(0) != null) {
+                switch (row.getCell(0).getStringCellValue().trim()) {
+                    case Constants.INCOME_FROM_SALES -> entity.setAnnualSales(Utils.cellValue(row, 1));
+                    case Constants.GROSS_PROFIT -> grossProfit = Utils.cellValue(row, 1);
+                    case Constants.ADMINISTRATIVE_EXPENSES -> administrativeExpenses = Utils.cellValue(row, 1);
+                    case Constants.MARKETING_SALES_DISTRIBUTION_EXPENSES ->
+                            marketingSalesDistributionExpenses = Utils.cellValue(row, 1);
+                    case Constants.RESEARCH_DEVELOPMENT_EXPENSES ->
+                            researchDevelopmentExpenses = Utils.cellValue(row, 1);
+                    case Constants.PARENT_COMPANY_SHARES -> {
+                        entity.setTtmNetProfit(Utils.cellValue(row, 1));
+                        entity.setPrevTtmNetProfit(Utils.cellValue(row, 5));
+                    }
+                }
+            }
+        }
 
+        for (int k = 0; k < annualCashFlowSheet.getPhysicalNumberOfRows(); k++) {
+            Row row = annualCashFlowSheet.getRow(k);
+            if (row.getCell(0) != null && row.getCell(0).getStringCellValue().trim().equals(Constants.DEPRECIATION_AND_AMORTIZATION)) {
+                depreciationAmortization = Utils.cellValue(row, 1);
+            }
+        }
+
+        BigDecimal netDebt = shortTermFinancialLiabilities.add(longTermFinancialLiabilities)
+                .subtract(cashAndEquivalents).subtract(financialInvestments);
+
+        BigDecimal annualEbitda = grossProfit.add(administrativeExpenses).add(marketingSalesDistributionExpenses)
+                .add(researchDevelopmentExpenses).add(depreciationAmortization);
+
+        entity.setBalanceSheetTerm(balanceSheet.getRow(0).getCell(1).getStringCellValue());
+        entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
+        entity.setAnnualEbitda(annualEbitda);
+        entity.setTicker(ticker);
+        entity.setNetDebt(netDebt);
+        valuationInfoRepository.save(entity);
     }
 
     @Override
-    public void saveValuationInfoInsurance(String ticker,
-                                           String balanceSheetTerm,
-                                           List<BalanceSheetRecord> balanceSheetRecordList) {
+    public void saveValuationInfoInsurance(String ticker, XSSFWorkbook workbook) {
+
         ValuationInfo entity = new ValuationInfo();
-        for (BalanceSheetRecord r : balanceSheetRecordList) {
-            switch (r.getLabel()) {
-                case Constants.EQUITIES -> entity.setEquity(Utils.stringToBigDecimal(r.getValues().get(0)));
-                case Constants.PAID_CAPITAL -> entity.setInitialCapital(Utils.stringToBigDecimal(r.getValues().get(0)));
-                case "NET DÖNEM KARI (ZARARI)" -> {
-                    BigDecimal netProfit1 = Utils.stringToBigDecimal(r.getQuarter_values().get(0));
-                    BigDecimal netProfit2 = Utils.stringToBigDecimal(r.getQuarter_values().get(1));
-                    BigDecimal netProfit3 = Utils.stringToBigDecimal(r.getQuarter_values().get(2));
-                    BigDecimal netProfit4 = Utils.stringToBigDecimal(r.getQuarter_values().get(3));
-                    BigDecimal netProfit5 = Utils.stringToBigDecimal(r.getQuarter_values().get(4));
-                    BigDecimal netProfit6 = Utils.stringToBigDecimal(r.getQuarter_values().get(5));
-                    BigDecimal netProfit7 = Utils.stringToBigDecimal(r.getQuarter_values().get(6));
-                    BigDecimal netProfit8 = Utils.stringToBigDecimal(r.getQuarter_values().get(7));
-                    entity.setTtmNetProfit(netProfit1.add(netProfit2.add(netProfit3.add(netProfit4))));
-                    entity.setPrevTtmNetProfit(netProfit5.add(netProfit6.add(netProfit7.add(netProfit8))));
-                }
-                default -> {
-                    // do nothing
+
+        BigDecimal cashAndEquivalents = BigDecimal.ZERO;
+        BigDecimal financialInvestments = BigDecimal.ZERO;
+        BigDecimal shortTermFinancialLiabilities = BigDecimal.ZERO;
+        BigDecimal longTermFinancialLiabilities = BigDecimal.ZERO;
+
+        BigDecimal grossProfit = BigDecimal.ZERO;
+        BigDecimal administrativeExpenses = BigDecimal.ZERO;
+        BigDecimal marketingSalesDistributionExpenses = BigDecimal.ZERO;
+        BigDecimal researchDevelopmentExpenses = BigDecimal.ZERO;
+
+        BigDecimal depreciationAmortization = BigDecimal.ZERO;
+
+        XSSFSheet balanceSheet = workbook.getSheetAt(0);
+        XSSFSheet annualProfitSheet = workbook.getSheetAt(3);
+        XSSFSheet annualCashFlowSheet = workbook.getSheetAt(6);
+
+        for (int j = 0; j < balanceSheet.getPhysicalNumberOfRows(); j++) {
+
+            Row row = balanceSheet.getRow(j);
+
+            if (row.getCell(0) != null) {
+                switch (row.getCell(0).getStringCellValue().trim()) {
+                    case Constants.TOTAL_SHORT_TERM_LIABILITIES ->
+                            shortTermFinancialLiabilities = Utils.cellValue(row, 1);
+                    case Constants.TOTAL_LONG_TERM_LIABILITIES ->
+                            longTermFinancialLiabilities = Utils.cellValue(row, 1);
+                    case Constants.CASH_AND_EQUIVALENTS -> cashAndEquivalents = Utils.cellValue(row, 1);
+                    case Constants.FINANCIAL_INVESTMENTS -> financialInvestments = Utils.cellValue(row, 1);
+                    case Constants.EQUITIES -> entity.setEquity(Utils.cellValue(row, 1));
+                    case Constants.INITIAL_CAPITAL -> entity.setInitialCapital(Utils.cellValue(row, 1));
                 }
             }
         }
 
-        // TODO -> Sigortacılıkta Favök Marjı ve Kâr Marjı olmaz, bunların değerlemesini ayırmak gerekiyor.
-        entity.setAnnualSales(BigDecimal.ZERO);
-        entity.setAnnualEbitda(BigDecimal.ZERO);
-        entity.setNetDebt(BigDecimal.ZERO);
-        entity.setTicker(ticker);
-        entity.setBalanceSheetTerm(balanceSheetTerm);
-        entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
-        valuationInfoRepository.save(entity);
+        for (int i = 0; i < annualProfitSheet.getPhysicalNumberOfRows(); i++) {
+            Row row = annualProfitSheet.getRow(i);
+            if (row.getCell(0) != null) {
+                switch (row.getCell(0).getStringCellValue().trim()) {
+                    case Constants.INCOME_FROM_SALES -> entity.setAnnualSales(Utils.cellValue(row, 1));
+                    case Constants.GROSS_PROFIT -> grossProfit = Utils.cellValue(row, 1);
+                    case Constants.ADMINISTRATIVE_EXPENSES -> administrativeExpenses = Utils.cellValue(row, 1);
+                    case Constants.MARKETING_SALES_DISTRIBUTION_EXPENSES ->
+                            marketingSalesDistributionExpenses = Utils.cellValue(row, 1);
+                    case Constants.RESEARCH_DEVELOPMENT_EXPENSES ->
+                            researchDevelopmentExpenses = Utils.cellValue(row, 1);
+                    case Constants.PARENT_COMPANY_SHARES -> {
+                        entity.setTtmNetProfit(Utils.cellValue(row, 1));
+                        entity.setPrevTtmNetProfit(Utils.cellValue(row, 5));
+                    }
+                }
+            }
+        }
 
+        for (int k = 0; k < annualCashFlowSheet.getPhysicalNumberOfRows(); k++) {
+            Row row = annualCashFlowSheet.getRow(k);
+            if (row.getCell(0) != null && row.getCell(0).getStringCellValue().trim().equals(Constants.DEPRECIATION_AND_AMORTIZATION)) {
+                depreciationAmortization = Utils.cellValue(row, 1);
+            }
+        }
+
+        BigDecimal netDebt = shortTermFinancialLiabilities.add(longTermFinancialLiabilities)
+                .subtract(cashAndEquivalents).subtract(financialInvestments);
+
+        BigDecimal annualEbitda = grossProfit.add(administrativeExpenses).add(marketingSalesDistributionExpenses)
+                .add(researchDevelopmentExpenses).add(depreciationAmortization);
+
+        entity.setBalanceSheetTerm(balanceSheet.getRow(0).getCell(1).getStringCellValue());
+        entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
+        entity.setAnnualEbitda(annualEbitda);
+        entity.setTicker(ticker);
+        entity.setNetDebt(netDebt);
+        valuationInfoRepository.save(entity);
     }
 }

@@ -1,8 +1,7 @@
 package com.borsaistanbul.stockvaluation.business.valuation;
 
-import com.borsaistanbul.stockvaluation.dto.model.BalanceSheetRecord;
-import com.borsaistanbul.stockvaluation.dto.model.BriefReportRecord;
 import com.borsaistanbul.stockvaluation.dto.model.ValuationResult;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.util.List;
 
@@ -12,12 +11,10 @@ public interface ValuationBusiness {
 
     void webScraper(String ticker, String industry);
 
-    BriefReportRecord getBriefReportData(String ticker);
+    void saveValuationInfo(String ticker, XSSFWorkbook workbook);
 
-    void saveValuationInfo(String ticker, String balanceSheetTerm, List<BalanceSheetRecord> balanceSheetRecordList, BriefReportRecord briefReportRecord);
+    void saveValuationInfoBanking(String ticker, XSSFWorkbook workbook);
 
-    void saveValuationInfoBanking(String ticker, String balanceSheetTerm, List<BalanceSheetRecord> balanceSheetRecordList);
-
-    void saveValuationInfoInsurance(String ticker, String balanceSheetTerm, List<BalanceSheetRecord> balanceSheetRecordList);
+    void saveValuationInfoInsurance(String ticker, XSSFWorkbook workbook);
 
 }
