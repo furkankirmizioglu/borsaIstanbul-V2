@@ -23,6 +23,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -132,8 +133,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
         BigDecimal cashAndEquivalents = BigDecimal.ZERO;
         BigDecimal financialInvestments = BigDecimal.ZERO;
-        BigDecimal shortTermFinancialLiabilities = BigDecimal.ZERO;
-        BigDecimal longTermFinancialLiabilities = BigDecimal.ZERO;
+        BigDecimal totalFinancialLiabilities = BigDecimal.ZERO;
 
         BigDecimal grossProfit = BigDecimal.ZERO;
         BigDecimal administrativeExpenses = BigDecimal.ZERO;
@@ -152,12 +152,15 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
             if (row.getCell(0) != null) {
                 switch (row.getCell(0).getStringCellValue().trim()) {
-                    case Constants.TOTAL_SHORT_TERM_LIABILITIES ->
-                            shortTermFinancialLiabilities = Utils.cellValue(row, 1);
-                    case Constants.TOTAL_LONG_TERM_LIABILITIES ->
-                            longTermFinancialLiabilities = Utils.cellValue(row, 1);
+                    case Constants.FINANCIAL_LIABILITIES ->
+                            totalFinancialLiabilities = totalFinancialLiabilities.add(Utils.cellValue(row, 1));
                     case Constants.CASH_AND_EQUIVALENTS -> cashAndEquivalents = Utils.cellValue(row, 1);
-                    case Constants.FINANCIAL_INVESTMENTS -> financialInvestments = Utils.cellValue(row, 1);
+                    case Constants.FINANCIAL_INVESTMENTS -> {
+                        if(Objects.equals(financialInvestments, BigDecimal.ZERO))
+                        {
+                            financialInvestments = Utils.cellValue(row, 1);
+                        }
+                    }
                     case Constants.EQUITIES -> entity.setEquity(Utils.cellValue(row, 1));
                     case Constants.INITIAL_CAPITAL -> entity.setInitialCapital(Utils.cellValue(row, 1));
                 }
@@ -190,8 +193,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
             }
         }
 
-        BigDecimal netDebt = shortTermFinancialLiabilities.add(longTermFinancialLiabilities)
-                .subtract(cashAndEquivalents).subtract(financialInvestments);
+        BigDecimal netDebt = totalFinancialLiabilities.subtract(cashAndEquivalents.add(financialInvestments));
 
         BigDecimal annualEbitda = grossProfit.add(administrativeExpenses).add(marketingSalesDistributionExpenses)
                 .add(researchDevelopmentExpenses).add(depreciationAmortization);
@@ -211,8 +213,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
         BigDecimal cashAndEquivalents = BigDecimal.ZERO;
         BigDecimal financialInvestments = BigDecimal.ZERO;
-        BigDecimal shortTermFinancialLiabilities = BigDecimal.ZERO;
-        BigDecimal longTermFinancialLiabilities = BigDecimal.ZERO;
+        BigDecimal totalFinancialLiabilities = BigDecimal.ZERO;
 
         BigDecimal grossProfit = BigDecimal.ZERO;
         BigDecimal administrativeExpenses = BigDecimal.ZERO;
@@ -231,12 +232,15 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
             if (row.getCell(0) != null) {
                 switch (row.getCell(0).getStringCellValue().trim()) {
-                    case Constants.TOTAL_SHORT_TERM_LIABILITIES ->
-                            shortTermFinancialLiabilities = Utils.cellValue(row, 1);
-                    case Constants.TOTAL_LONG_TERM_LIABILITIES ->
-                            longTermFinancialLiabilities = Utils.cellValue(row, 1);
+                    case Constants.FINANCIAL_LIABILITIES ->
+                            totalFinancialLiabilities = totalFinancialLiabilities.add(Utils.cellValue(row, 1));
                     case Constants.CASH_AND_EQUIVALENTS -> cashAndEquivalents = Utils.cellValue(row, 1);
-                    case Constants.FINANCIAL_INVESTMENTS -> financialInvestments = Utils.cellValue(row, 1);
+                    case Constants.FINANCIAL_INVESTMENTS -> {
+                        if(Objects.equals(financialInvestments, BigDecimal.ZERO))
+                        {
+                            financialInvestments = Utils.cellValue(row, 1);
+                        }
+                    }
                     case Constants.EQUITIES -> entity.setEquity(Utils.cellValue(row, 1));
                     case Constants.INITIAL_CAPITAL -> entity.setInitialCapital(Utils.cellValue(row, 1));
                 }
@@ -269,8 +273,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
             }
         }
 
-        BigDecimal netDebt = shortTermFinancialLiabilities.add(longTermFinancialLiabilities)
-                .subtract(cashAndEquivalents).subtract(financialInvestments);
+        BigDecimal netDebt = totalFinancialLiabilities.subtract(cashAndEquivalents.add(financialInvestments));
 
         BigDecimal annualEbitda = grossProfit.add(administrativeExpenses).add(marketingSalesDistributionExpenses)
                 .add(researchDevelopmentExpenses).add(depreciationAmortization);
@@ -290,8 +293,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
         BigDecimal cashAndEquivalents = BigDecimal.ZERO;
         BigDecimal financialInvestments = BigDecimal.ZERO;
-        BigDecimal shortTermFinancialLiabilities = BigDecimal.ZERO;
-        BigDecimal longTermFinancialLiabilities = BigDecimal.ZERO;
+        BigDecimal totalFinancialLiabilities = BigDecimal.ZERO;
 
         BigDecimal grossProfit = BigDecimal.ZERO;
         BigDecimal administrativeExpenses = BigDecimal.ZERO;
@@ -310,12 +312,15 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
             if (row.getCell(0) != null) {
                 switch (row.getCell(0).getStringCellValue().trim()) {
-                    case Constants.TOTAL_SHORT_TERM_LIABILITIES ->
-                            shortTermFinancialLiabilities = Utils.cellValue(row, 1);
-                    case Constants.TOTAL_LONG_TERM_LIABILITIES ->
-                            longTermFinancialLiabilities = Utils.cellValue(row, 1);
+                    case Constants.FINANCIAL_LIABILITIES ->
+                            totalFinancialLiabilities = totalFinancialLiabilities.add(Utils.cellValue(row, 1));
                     case Constants.CASH_AND_EQUIVALENTS -> cashAndEquivalents = Utils.cellValue(row, 1);
-                    case Constants.FINANCIAL_INVESTMENTS -> financialInvestments = Utils.cellValue(row, 1);
+                    case Constants.FINANCIAL_INVESTMENTS -> {
+                        if(Objects.equals(financialInvestments, BigDecimal.ZERO))
+                        {
+                            financialInvestments = Utils.cellValue(row, 1);
+                        }
+                    }
                     case Constants.EQUITIES -> entity.setEquity(Utils.cellValue(row, 1));
                     case Constants.INITIAL_CAPITAL -> entity.setInitialCapital(Utils.cellValue(row, 1));
                 }
@@ -348,8 +353,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
             }
         }
 
-        BigDecimal netDebt = shortTermFinancialLiabilities.add(longTermFinancialLiabilities)
-                .subtract(cashAndEquivalents).subtract(financialInvestments);
+        BigDecimal netDebt = totalFinancialLiabilities.subtract(cashAndEquivalents.add(financialInvestments));
 
         BigDecimal annualEbitda = grossProfit.add(administrativeExpenses).add(marketingSalesDistributionExpenses)
                 .add(researchDevelopmentExpenses).add(depreciationAmortization);
