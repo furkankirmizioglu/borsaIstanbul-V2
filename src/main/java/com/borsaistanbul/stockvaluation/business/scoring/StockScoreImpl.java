@@ -1,9 +1,8 @@
 package com.borsaistanbul.stockvaluation.business.scoring;
 
-import com.borsaistanbul.stockvaluation.dto.model.ValuationResult;
+import com.borsaistanbul.stockvaluation.dto.model.Response;
 import org.apache.commons.math3.util.Precision;
 import org.springframework.stereotype.Service;
-
 import java.util.Comparator;
 import java.util.List;
 
@@ -11,10 +10,10 @@ import java.util.List;
 public class StockScoreImpl implements StockScore {
 
     // Scoring based on PEG ratio.
-    public void pegScore(List<ValuationResult> resultList) {
+    public void pegScore(List<Response> resultList) {
         int scoreCounter = resultList.size();
-        resultList.sort(Comparator.comparing(ValuationResult::getPeg));
-        for (ValuationResult x : resultList) {
+        resultList.sort(Comparator.comparing(Response::getPeg));
+        for (Response x : resultList) {
             if (x.getPeg() > 0) {
                 x.setFinalScore(scoreCounter);
                 scoreCounter--;
@@ -25,10 +24,10 @@ public class StockScoreImpl implements StockScore {
     }
 
     // Scoring based on P/B ratio.
-    public void pbScore(List<ValuationResult> resultList) {
+    public void pbScore(List<Response> resultList) {
         int scoreCounter = resultList.size();
-        resultList.sort(Comparator.comparing(ValuationResult::getPb));
-        for (ValuationResult x : resultList) {
+        resultList.sort(Comparator.comparing(Response::getPb));
+        for (Response x : resultList) {
             if (x.getPb() > 0) {
                 x.setFinalScore(x.getFinalScore() + scoreCounter);
                 scoreCounter--;
@@ -37,10 +36,10 @@ public class StockScoreImpl implements StockScore {
     }
 
     // Scoring based on EBITDA Margin sort by highest to lowest.
-    public void ebitdaMarginScore(List<ValuationResult> resultList) {
+    public void ebitdaMarginScore(List<Response> resultList) {
         int scoreCounter = resultList.size();
-        resultList.sort(Comparator.comparing(ValuationResult::getEbitdaMargin).reversed());
-        for (ValuationResult x : resultList) {
+        resultList.sort(Comparator.comparing(Response::getEbitdaMargin).reversed());
+        for (Response x : resultList) {
             if (x.getEbitdaMargin() != Double.POSITIVE_INFINITY && x.getEbitdaMargin() != Double.NEGATIVE_INFINITY) {
                 x.setFinalScore(x.getFinalScore() + scoreCounter);
                 scoreCounter--;
@@ -49,10 +48,10 @@ public class StockScoreImpl implements StockScore {
     }
 
     // Scoring based on Net Profit Margin sort by highest to lowest.
-    public void netProfitMarginScore(List<ValuationResult> resultList) {
+    public void netProfitMarginScore(List<Response> resultList) {
         int scoreCounter = resultList.size();
-        resultList.sort(Comparator.comparing(ValuationResult::getNetProfitMargin).reversed());
-        for (ValuationResult x : resultList) {
+        resultList.sort(Comparator.comparing(Response::getNetProfitMargin).reversed());
+        for (Response x : resultList) {
             if (x.getNetProfitMargin() != Double.POSITIVE_INFINITY && x.getNetProfitMargin() != Double.NEGATIVE_INFINITY) {
                 x.setFinalScore(x.getFinalScore() + scoreCounter);
                 scoreCounter--;
@@ -61,16 +60,16 @@ public class StockScoreImpl implements StockScore {
     }
 
     // Scoring based on net debt to ebitda ratio.
-    public void netDebtToEbitdaScore(List<ValuationResult> resultList) {
+    public void netDebtToEbitdaScore(List<Response> resultList) {
         int scoreCounter = resultList.size();
-        resultList.sort(Comparator.comparing(ValuationResult::getNetDebtToEbitda));
-        for (ValuationResult x : resultList) {
+        resultList.sort(Comparator.comparing(Response::getNetDebtToEbitda));
+        for (Response x : resultList) {
             x.setFinalScore(x.getFinalScore() + scoreCounter);
             scoreCounter--;
         }
     }
 
-    public void scoring(List<ValuationResult> resultList) {
+    public void scoring(List<Response> resultList) {
 
         pegScore(resultList);
         pbScore(resultList);
@@ -79,15 +78,15 @@ public class StockScoreImpl implements StockScore {
         netDebtToEbitdaScore(resultList);
 
         // Total score will divide to count of companies multiply by indicators (5) count and index to 100.
-        resultList.sort(Comparator.comparing(ValuationResult::getFinalScore));
-        for (ValuationResult x : resultList) {
+        resultList.sort(Comparator.comparing(Response::getFinalScore));
+        for (Response x : resultList) {
             double score = Precision.round(x.getFinalScore() / (resultList.size() * 5) * 100, 0);
             x.setFinalScore(score);
         }
 
         // Total scores will sort by highest to lowest.
-        resultList.sort(Comparator.comparing(ValuationResult::getFinalScore).reversed());
-        for (ValuationResult x : resultList) {
+        resultList.sort(Comparator.comparing(Response::getFinalScore).reversed());
+        for (Response x : resultList) {
             if (x.getFinalScore() >= 85) {
                 x.setSuggestion("Güçlü Al");
             } else if (x.getFinalScore() >= 70) {

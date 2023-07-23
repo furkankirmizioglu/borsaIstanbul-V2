@@ -20,6 +20,11 @@ public class Utils {
         return Long.parseLong(dtf.format(now));
     }
 
+    public static double priceToEarnings(double closePrice, ValuationInfo info) {
+        double currentEPS = Precision.round(info.getTtmNetProfit().doubleValue() / info.getInitialCapital().doubleValue(), 2);
+        return Precision.round(closePrice / currentEPS, 2);
+    }
+
     public static double priceToEarningsGrowth(double closePrice, ValuationInfo info) {
         double currentEPS = Precision.round(info.getTtmNetProfit().doubleValue() / info.getInitialCapital().doubleValue(), 2);
         double previousEPS = Precision.round(info.getPrevTtmNetProfit().doubleValue() / info.getInitialCapital().doubleValue(), 2);

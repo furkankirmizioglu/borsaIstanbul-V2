@@ -2,7 +2,8 @@ package com.borsaistanbul.stockvaluation.business.valuation;
 
 import com.borsaistanbul.stockvaluation.client.PriceInfoService;
 import com.borsaistanbul.stockvaluation.dto.entity.ValuationInfo;
-import com.borsaistanbul.stockvaluation.dto.model.ValuationResult;
+import com.borsaistanbul.stockvaluation.dto.model.FinancialValues;
+import com.borsaistanbul.stockvaluation.dto.model.Response;
 import com.borsaistanbul.stockvaluation.repository.CompanyInfoRepository;
 import com.borsaistanbul.stockvaluation.repository.ValuationInfoRepository;
 import com.borsaistanbul.stockvaluation.utils.Constants;
@@ -26,6 +27,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import static com.borsaistanbul.stockvaluation.utils.Constants.FINANCIAL_LIABILITIES;
+
 @Service
 public class ValuationBusinessImpl implements ValuationBusiness {
     @Autowired
@@ -43,46 +46,46 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         this.priceInfoService = priceInfoService;
     }
 
-
     @Override
-    public List<ValuationResult> business(List<String> tickerList, String industry) {
-        List<ValuationResult> valuationResultList = new ArrayList<>();
+    public List<Response> business(String industry) {
+
+        // Find all tickers matches with given industry info.
+        List<String> tickerList = companyInfoRepository.findTickerByIndustry(industry);
+
+        List<Response> responseList = new ArrayList<>();
         for (String ticker : tickerList) {
 
-            // Query VALUATION_INFO table for valuation information.
-            Optional<ValuationInfo> info = valuationInfoRepository.findAllByTicker(ticker);
-
+            // Go to VALUATION_INFO table for valuation values.
             // If response is null,
-            // then we have to fetch balance sheet data from FinTables, insert to database and inquiry again.
+            // then we have to fetch balance sheet data from FinTables, insert into table and inquiry again.
+            Optional<ValuationInfo> info = valuationInfoRepository.findAllByTicker(ticker);
+            String companyName = companyInfoRepository.findCompanyNameByTicker(ticker);
+
             if (info.isEmpty()) {
-                webScraper(ticker, industry);
+                fetchFinancialTables(ticker, industry);
                 info = valuationInfoRepository.findAllByTicker(ticker);
             }
 
-            // Retrieve the last price from FinTables.
             double price = priceInfoService.fetchPriceInfo(ticker);
-            // Query company name from COMPANY_INFO table.
-            String companyName = companyInfoRepository.findCompanyNameByTicker(ticker);
 
             // Valuation results will put into arraylist.
-            info.ifPresent(valuationInfo -> valuationResultList.add(
-                    ValuationResult.builder()
+            info.ifPresent(valuationInfo -> responseList.add(
+                    Response.builder()
                             .price(price)
                             .companyName(companyName)
                             .ticker(valuationInfo.getTicker())
                             .latestBalanceSheetTerm(valuationInfo.getBalanceSheetTerm())
                             .pb(Utils.priceToBookRatio(price, valuationInfo))
+                            .pe(Utils.priceToEarnings(price, valuationInfo))
                             .peg(Utils.priceToEarningsGrowth(price, valuationInfo))
                             .ebitdaMargin(Utils.ebitdaMargin(valuationInfo))
                             .netDebtToEbitda(Utils.netDebtToEbitda(valuationInfo))
                             .netProfitMargin(Utils.netProfitMargin(valuationInfo)).build()));
         }
-        return valuationResultList;
+        return responseList;
     }
 
-    @Override
-    public void webScraper(String ticker, String industry) {
-
+    private void fetchFinancialTables(String ticker, String industry) {
 
         try {
             String urlStr = "https://fintables.com/sirketler/" + ticker + "/finansal-tablolar/excel?currency=";
@@ -101,10 +104,8 @@ public class ValuationBusinessImpl implements ValuationBusiness {
             }
             fileOutputStream.close();
 
-
             // Parse the Excel file.
             XSSFWorkbook workbook = new XSSFWorkbook(fileName);
-
 
             if (industry.equals("Bankacılık") || industry.equals("Aracı Kurumlar")) {
                 saveValuationInfoBanking(ticker, workbook);
@@ -121,248 +122,166 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-
     }
 
-    @Override
-    public void saveValuationInfo(String ticker,
-                                  XSSFWorkbook workbook) {
+    private void saveValuationInfo(String ticker, XSSFWorkbook workbook) {
 
-        ValuationInfo entity = new ValuationInfo();
-
-        BigDecimal cashAndEquivalents = BigDecimal.ZERO;
-        BigDecimal financialInvestments = BigDecimal.ZERO;
-        BigDecimal totalFinancialLiabilities = BigDecimal.ZERO;
-
-        BigDecimal grossProfit = BigDecimal.ZERO;
-        BigDecimal administrativeExpenses = BigDecimal.ZERO;
-        BigDecimal marketingSalesDistributionExpenses = BigDecimal.ZERO;
-        BigDecimal researchDevelopmentExpenses = BigDecimal.ZERO;
-
-        BigDecimal depreciationAmortization = BigDecimal.ZERO;
+        FinancialValues values = new FinancialValues();
 
         XSSFSheet balanceSheet = workbook.getSheetAt(0);
         XSSFSheet annualProfitSheet = workbook.getSheetAt(3);
         XSSFSheet annualCashFlowSheet = workbook.getSheetAt(6);
 
-        for (int j = 0; j < balanceSheet.getPhysicalNumberOfRows(); j++) {
+        balanceSheetParser(values, balanceSheet);
+        annualProfitSheetParser(values, annualProfitSheet);
+        annualCashFlowSheetParser(values, annualCashFlowSheet);
 
-            Row row = balanceSheet.getRow(j);
+        BigDecimal netDebt = values.getTotalFinancialLiabilities()
+                .subtract(values.getCashAndEquivalents())
+                .subtract(values.getFinancialInvestments());
 
-            if (row.getCell(0) != null) {
-                switch (row.getCell(0).getStringCellValue().trim()) {
-                    case Constants.FINANCIAL_LIABILITIES ->
-                            totalFinancialLiabilities = totalFinancialLiabilities.add(Utils.cellValue(row, 1));
-                    case Constants.CASH_AND_EQUIVALENTS -> cashAndEquivalents = Utils.cellValue(row, 1);
-                    case Constants.FINANCIAL_INVESTMENTS -> {
-                        if(Objects.equals(financialInvestments, BigDecimal.ZERO))
-                        {
-                            financialInvestments = Utils.cellValue(row, 1);
-                        }
-                    }
-                    case Constants.EQUITIES -> entity.setEquity(Utils.cellValue(row, 1));
-                    case Constants.INITIAL_CAPITAL -> entity.setInitialCapital(Utils.cellValue(row, 1));
-                }
-            }
-        }
+        BigDecimal annualEbitda = values.getGrossProfit()
+                .add(values.getAdministrativeExpenses())
+                .add(values.getMarketingSalesDistributionExpenses())
+                .add(values.getResearchDevelopmentExpenses())
+                .add(values.getDepreciationAmortization());
 
-        for (int i = 0; i < annualProfitSheet.getPhysicalNumberOfRows(); i++) {
-            Row row = annualProfitSheet.getRow(i);
-            if (row.getCell(0) != null) {
-                switch (row.getCell(0).getStringCellValue().trim()) {
-                    case Constants.INCOME_FROM_SALES -> entity.setAnnualSales(Utils.cellValue(row, 1));
-                    case Constants.GROSS_PROFIT -> grossProfit = Utils.cellValue(row, 1);
-                    case Constants.ADMINISTRATIVE_EXPENSES -> administrativeExpenses = Utils.cellValue(row, 1);
-                    case Constants.MARKETING_SALES_DISTRIBUTION_EXPENSES ->
-                            marketingSalesDistributionExpenses = Utils.cellValue(row, 1);
-                    case Constants.RESEARCH_DEVELOPMENT_EXPENSES ->
-                            researchDevelopmentExpenses = Utils.cellValue(row, 1);
-                    case Constants.PARENT_COMPANY_SHARES -> {
-                        entity.setTtmNetProfit(Utils.cellValue(row, 1));
-                        entity.setPrevTtmNetProfit(Utils.cellValue(row, 5));
-                    }
-                }
-            }
-        }
-
-        for (int k = 0; k < annualCashFlowSheet.getPhysicalNumberOfRows(); k++) {
-            Row row = annualCashFlowSheet.getRow(k);
-            if (row.getCell(0) != null && row.getCell(0).getStringCellValue().trim().equals(Constants.DEPRECIATION_AND_AMORTIZATION)) {
-                depreciationAmortization = Utils.cellValue(row, 1);
-            }
-        }
-
-        BigDecimal netDebt = totalFinancialLiabilities.subtract(cashAndEquivalents.add(financialInvestments));
-
-        BigDecimal annualEbitda = grossProfit.add(administrativeExpenses).add(marketingSalesDistributionExpenses)
-                .add(researchDevelopmentExpenses).add(depreciationAmortization);
-
-        entity.setBalanceSheetTerm(balanceSheet.getRow(0).getCell(1).getStringCellValue());
-        entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
+        ValuationInfo entity = new ValuationInfo();
         entity.setAnnualEbitda(annualEbitda);
-        entity.setTicker(ticker);
+        entity.setAnnualSales(values.getAnnualSales());
+        entity.setBalanceSheetTerm(balanceSheet.getRow(0).getCell(1).getStringCellValue());
+        entity.setEquity(values.getEquities());
+        entity.setInitialCapital(values.getInitialCapital());
+        entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
         entity.setNetDebt(netDebt);
+        entity.setPrevTtmNetProfit(values.getPrevTtmNetProfit());
+        entity.setTtmNetProfit(values.getTtmNetProfit());
+        entity.setTicker(ticker);
         valuationInfoRepository.save(entity);
     }
 
-    @Override
-    public void saveValuationInfoBanking(String ticker, XSSFWorkbook workbook) {
+    private void saveValuationInfoBanking(String ticker, XSSFWorkbook workbook) {
 
-        ValuationInfo entity = new ValuationInfo();
-
-        BigDecimal cashAndEquivalents = BigDecimal.ZERO;
-        BigDecimal financialInvestments = BigDecimal.ZERO;
-        BigDecimal totalFinancialLiabilities = BigDecimal.ZERO;
-
-        BigDecimal grossProfit = BigDecimal.ZERO;
-        BigDecimal administrativeExpenses = BigDecimal.ZERO;
-        BigDecimal marketingSalesDistributionExpenses = BigDecimal.ZERO;
-        BigDecimal researchDevelopmentExpenses = BigDecimal.ZERO;
-
-        BigDecimal depreciationAmortization = BigDecimal.ZERO;
+        FinancialValues values = new FinancialValues();
 
         XSSFSheet balanceSheet = workbook.getSheetAt(0);
         XSSFSheet annualProfitSheet = workbook.getSheetAt(3);
         XSSFSheet annualCashFlowSheet = workbook.getSheetAt(6);
 
-        for (int j = 0; j < balanceSheet.getPhysicalNumberOfRows(); j++) {
+        balanceSheetParser(values, balanceSheet);
+        annualProfitSheetParser(values, annualProfitSheet);
+        annualCashFlowSheetParser(values, annualCashFlowSheet);
 
-            Row row = balanceSheet.getRow(j);
+        BigDecimal netDebt = values.getTotalFinancialLiabilities()
+                .subtract(values.getCashAndEquivalents())
+                .subtract(values.getFinancialInvestments());
 
-            if (row.getCell(0) != null) {
-                switch (row.getCell(0).getStringCellValue().trim()) {
-                    case Constants.FINANCIAL_LIABILITIES ->
-                            totalFinancialLiabilities = totalFinancialLiabilities.add(Utils.cellValue(row, 1));
-                    case Constants.CASH_AND_EQUIVALENTS -> cashAndEquivalents = Utils.cellValue(row, 1);
-                    case Constants.FINANCIAL_INVESTMENTS -> {
-                        if(Objects.equals(financialInvestments, BigDecimal.ZERO))
-                        {
-                            financialInvestments = Utils.cellValue(row, 1);
-                        }
-                    }
-                    case Constants.EQUITIES -> entity.setEquity(Utils.cellValue(row, 1));
-                    case Constants.INITIAL_CAPITAL -> entity.setInitialCapital(Utils.cellValue(row, 1));
-                }
-            }
-        }
+        BigDecimal annualEbitda = values.getGrossProfit()
+                .add(values.getAdministrativeExpenses())
+                .add(values.getMarketingSalesDistributionExpenses())
+                .add(values.getResearchDevelopmentExpenses())
+                .add(values.getDepreciationAmortization());
 
-        for (int i = 0; i < annualProfitSheet.getPhysicalNumberOfRows(); i++) {
-            Row row = annualProfitSheet.getRow(i);
-            if (row.getCell(0) != null) {
-                switch (row.getCell(0).getStringCellValue().trim()) {
-                    case Constants.INCOME_FROM_SALES -> entity.setAnnualSales(Utils.cellValue(row, 1));
-                    case Constants.GROSS_PROFIT -> grossProfit = Utils.cellValue(row, 1);
-                    case Constants.ADMINISTRATIVE_EXPENSES -> administrativeExpenses = Utils.cellValue(row, 1);
-                    case Constants.MARKETING_SALES_DISTRIBUTION_EXPENSES ->
-                            marketingSalesDistributionExpenses = Utils.cellValue(row, 1);
-                    case Constants.RESEARCH_DEVELOPMENT_EXPENSES ->
-                            researchDevelopmentExpenses = Utils.cellValue(row, 1);
-                    case Constants.PARENT_COMPANY_SHARES -> {
-                        entity.setTtmNetProfit(Utils.cellValue(row, 1));
-                        entity.setPrevTtmNetProfit(Utils.cellValue(row, 5));
-                    }
-                }
-            }
-        }
-
-        for (int k = 0; k < annualCashFlowSheet.getPhysicalNumberOfRows(); k++) {
-            Row row = annualCashFlowSheet.getRow(k);
-            if (row.getCell(0) != null && row.getCell(0).getStringCellValue().trim().equals(Constants.DEPRECIATION_AND_AMORTIZATION)) {
-                depreciationAmortization = Utils.cellValue(row, 1);
-            }
-        }
-
-        BigDecimal netDebt = totalFinancialLiabilities.subtract(cashAndEquivalents.add(financialInvestments));
-
-        BigDecimal annualEbitda = grossProfit.add(administrativeExpenses).add(marketingSalesDistributionExpenses)
-                .add(researchDevelopmentExpenses).add(depreciationAmortization);
-
-        entity.setBalanceSheetTerm(balanceSheet.getRow(0).getCell(1).getStringCellValue());
-        entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
+        ValuationInfo entity = new ValuationInfo();
         entity.setAnnualEbitda(annualEbitda);
-        entity.setTicker(ticker);
+        entity.setAnnualSales(values.getAnnualSales());
+        entity.setBalanceSheetTerm(balanceSheet.getRow(0).getCell(1).getStringCellValue());
+        entity.setEquity(values.getEquities());
+        entity.setInitialCapital(values.getInitialCapital());
+        entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
         entity.setNetDebt(netDebt);
+        entity.setPrevTtmNetProfit(values.getPrevTtmNetProfit());
+        entity.setTtmNetProfit(values.getTtmNetProfit());
+        entity.setTicker(ticker);
         valuationInfoRepository.save(entity);
     }
 
-    @Override
-    public void saveValuationInfoInsurance(String ticker, XSSFWorkbook workbook) {
+    private void saveValuationInfoInsurance(String ticker, XSSFWorkbook workbook) {
 
-        ValuationInfo entity = new ValuationInfo();
-
-        BigDecimal cashAndEquivalents = BigDecimal.ZERO;
-        BigDecimal financialInvestments = BigDecimal.ZERO;
-        BigDecimal totalFinancialLiabilities = BigDecimal.ZERO;
-
-        BigDecimal grossProfit = BigDecimal.ZERO;
-        BigDecimal administrativeExpenses = BigDecimal.ZERO;
-        BigDecimal marketingSalesDistributionExpenses = BigDecimal.ZERO;
-        BigDecimal researchDevelopmentExpenses = BigDecimal.ZERO;
-
-        BigDecimal depreciationAmortization = BigDecimal.ZERO;
+        FinancialValues values = new FinancialValues();
 
         XSSFSheet balanceSheet = workbook.getSheetAt(0);
         XSSFSheet annualProfitSheet = workbook.getSheetAt(3);
         XSSFSheet annualCashFlowSheet = workbook.getSheetAt(6);
 
+        balanceSheetParser(values, balanceSheet);
+        annualProfitSheetParser(values, annualProfitSheet);
+        annualCashFlowSheetParser(values, annualCashFlowSheet);
+
+        BigDecimal netDebt = values.getTotalFinancialLiabilities()
+                .subtract(values.getCashAndEquivalents())
+                .subtract(values.getFinancialInvestments());
+
+        BigDecimal annualEbitda = values.getGrossProfit()
+                .add(values.getAdministrativeExpenses())
+                .add(values.getMarketingSalesDistributionExpenses())
+                .add(values.getResearchDevelopmentExpenses())
+                .add(values.getDepreciationAmortization());
+
+        ValuationInfo entity = new ValuationInfo();
+        entity.setAnnualEbitda(annualEbitda);
+        entity.setAnnualSales(values.getAnnualSales());
+        entity.setBalanceSheetTerm(balanceSheet.getRow(0).getCell(1).getStringCellValue());
+        entity.setEquity(values.getEquities());
+        entity.setInitialCapital(values.getInitialCapital());
+        entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
+        entity.setNetDebt(netDebt);
+        entity.setPrevTtmNetProfit(values.getPrevTtmNetProfit());
+        entity.setTtmNetProfit(values.getTtmNetProfit());
+        entity.setTicker(ticker);
+        valuationInfoRepository.save(entity);
+    }
+
+    private void balanceSheetParser(FinancialValues values, XSSFSheet balanceSheet) {
+
         for (int j = 0; j < balanceSheet.getPhysicalNumberOfRows(); j++) {
-
             Row row = balanceSheet.getRow(j);
-
             if (row.getCell(0) != null) {
                 switch (row.getCell(0).getStringCellValue().trim()) {
-                    case Constants.FINANCIAL_LIABILITIES ->
-                            totalFinancialLiabilities = totalFinancialLiabilities.add(Utils.cellValue(row, 1));
-                    case Constants.CASH_AND_EQUIVALENTS -> cashAndEquivalents = Utils.cellValue(row, 1);
+                    case FINANCIAL_LIABILITIES -> values.setTotalFinancialLiabilities(
+                            values.getTotalFinancialLiabilities().add(Utils.cellValue(row, 1)));
+                    case Constants.CASH_AND_EQUIVALENTS -> values.setCashAndEquivalents(Utils.cellValue(row, 1));
                     case Constants.FINANCIAL_INVESTMENTS -> {
-                        if(Objects.equals(financialInvestments, BigDecimal.ZERO))
-                        {
-                            financialInvestments = Utils.cellValue(row, 1);
+                        if (Objects.equals(values.getFinancialInvestments(), BigDecimal.ZERO)) {
+                            values.setFinancialInvestments(Utils.cellValue(row, 1));
                         }
                     }
-                    case Constants.EQUITIES -> entity.setEquity(Utils.cellValue(row, 1));
-                    case Constants.INITIAL_CAPITAL -> entity.setInitialCapital(Utils.cellValue(row, 1));
+                    case Constants.EQUITIES -> values.setEquities(Utils.cellValue(row, 1));
+                    case Constants.INITIAL_CAPITAL -> values.setInitialCapital(Utils.cellValue(row, 1));
                 }
             }
         }
+    }
 
+    private void annualProfitSheetParser(FinancialValues values, XSSFSheet annualProfitSheet) {
         for (int i = 0; i < annualProfitSheet.getPhysicalNumberOfRows(); i++) {
             Row row = annualProfitSheet.getRow(i);
             if (row.getCell(0) != null) {
                 switch (row.getCell(0).getStringCellValue().trim()) {
-                    case Constants.INCOME_FROM_SALES -> entity.setAnnualSales(Utils.cellValue(row, 1));
-                    case Constants.GROSS_PROFIT -> grossProfit = Utils.cellValue(row, 1);
-                    case Constants.ADMINISTRATIVE_EXPENSES -> administrativeExpenses = Utils.cellValue(row, 1);
+                    case Constants.INCOME_FROM_SALES -> values.setAnnualSales(Utils.cellValue(row, 1));
+                    case Constants.GROSS_PROFIT -> values.setGrossProfit(Utils.cellValue(row, 1));
+                    case Constants.ADMINISTRATIVE_EXPENSES -> values.setAdministrativeExpenses(Utils.cellValue(row, 1));
                     case Constants.MARKETING_SALES_DISTRIBUTION_EXPENSES ->
-                            marketingSalesDistributionExpenses = Utils.cellValue(row, 1);
+                            values.setMarketingSalesDistributionExpenses(Utils.cellValue(row, 1));
                     case Constants.RESEARCH_DEVELOPMENT_EXPENSES ->
-                            researchDevelopmentExpenses = Utils.cellValue(row, 1);
+                            values.setResearchDevelopmentExpenses(Utils.cellValue(row, 1));
                     case Constants.PARENT_COMPANY_SHARES -> {
-                        entity.setTtmNetProfit(Utils.cellValue(row, 1));
-                        entity.setPrevTtmNetProfit(Utils.cellValue(row, 5));
+                        values.setTtmNetProfit(Utils.cellValue(row, 1));
+                        values.setPrevTtmNetProfit(Utils.cellValue(row, 5));
                     }
                 }
             }
         }
 
+    }
+
+    private void annualCashFlowSheetParser(FinancialValues values, XSSFSheet annualCashFlowSheet) {
         for (int k = 0; k < annualCashFlowSheet.getPhysicalNumberOfRows(); k++) {
             Row row = annualCashFlowSheet.getRow(k);
             if (row.getCell(0) != null && row.getCell(0).getStringCellValue().trim().equals(Constants.DEPRECIATION_AND_AMORTIZATION)) {
-                depreciationAmortization = Utils.cellValue(row, 1);
+                values.setDepreciationAmortization(Utils.cellValue(row, 1));
             }
         }
-
-        BigDecimal netDebt = totalFinancialLiabilities.subtract(cashAndEquivalents.add(financialInvestments));
-
-        BigDecimal annualEbitda = grossProfit.add(administrativeExpenses).add(marketingSalesDistributionExpenses)
-                .add(researchDevelopmentExpenses).add(depreciationAmortization);
-
-        entity.setBalanceSheetTerm(balanceSheet.getRow(0).getCell(1).getStringCellValue());
-        entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
-        entity.setAnnualEbitda(annualEbitda);
-        entity.setTicker(ticker);
-        entity.setNetDebt(netDebt);
-        valuationInfoRepository.save(entity);
     }
+
 }

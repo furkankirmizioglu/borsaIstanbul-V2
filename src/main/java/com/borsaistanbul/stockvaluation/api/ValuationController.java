@@ -1,6 +1,6 @@
 package com.borsaistanbul.stockvaluation.api;
 
-import com.borsaistanbul.stockvaluation.dto.model.ValuationResult;
+import com.borsaistanbul.stockvaluation.dto.model.Response;
 import com.borsaistanbul.stockvaluation.service.ValuationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +20,7 @@ public class ValuationController {
 
     @PostMapping(path = "list")
     @CrossOrigin(origins = "http://localhost:3000")
-    List<ValuationResult> valuation(@RequestBody String industry) {
+    List<Response> valuation(@RequestBody String industry) {
         return service.valuation(industry);
 
     }
