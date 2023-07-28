@@ -54,6 +54,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
     @Override
     public List<ResponseData> business(String industry) {
+        log.info("{} sektörü için değerleme hesaplamaları başladı...", industry);
 
         // Find all tickers matches with given industry info.
         List<String> tickerList = companyInfoRepository.findTickerByIndustry(industry);
@@ -68,9 +69,12 @@ public class ValuationBusinessImpl implements ValuationBusiness {
             String companyName = companyInfoRepository.findCompanyNameByTicker(ticker);
 
             if (info.isEmpty()) {
-                fetchFinancialTables(ticker, industry);
+                log.info("{} için veri tabanında bilanço bilgisi bulunamadı. Bilanço tarama başlatılıyor...", ticker);
+                fetchFinancialTables(ticker);
                 info = valuationInfoRepository.findAllByTicker(ticker);
             }
+
+            log.info("{} için değerleme işlemi başladı...", ticker);
 
             double price = priceInfoService.fetchPriceInfo(ticker);
 
@@ -87,14 +91,15 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                             .ebitdaMargin(CalculateTools.ebitdaMargin(valuationInfo))
                             .netDebtToEbitda(CalculateTools.netDebtToEbitda(valuationInfo))
                             .netProfitMargin(CalculateTools.netProfitMargin(valuationInfo)).build()));
+
+            log.info("{} için değerleme işlemi tamamlandı...", ticker);
         }
+        log.info("{} sektörü için değerleme hesaplamaları tamamlandı...", industry);
         return responseDataList;
     }
 
-    private void fetchFinancialTables(String ticker, String industry) {
-        log.debug("Dummy log for industry: {}", industry);
+    private void fetchFinancialTables(String ticker) {
         XSSFWorkbook workbook = getExcelFile(ticker);
-
         saveValuationInfo(ticker, workbook);
     }
 
@@ -154,6 +159,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         entity.setTtmNetProfit(values.getTtmNetProfit());
         entity.setTicker(ticker);
         valuationInfoRepository.save(entity);
+        log.info("{} için bilanço tarama işlemi başarıyla tamamlandı ve veri tabanına kaydedildi.", ticker);
     }
 
     private void balanceSheetParser(FinancialValues values, XSSFSheet balanceSheet) {
