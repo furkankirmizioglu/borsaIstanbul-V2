@@ -7,15 +7,17 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-public class ValuationResult {
+public class ResponseData {
     private String ticker;
     private String companyName;
     private String latestBalanceSheetTerm;
     private double price;
+    private double pe;
     private double pb;
     private double peg;
     private double ebitdaMargin;
     private double netProfitMargin;
+    private double netDebtToEbitda;
     private double finalScore;
     private String suggestion;
 }

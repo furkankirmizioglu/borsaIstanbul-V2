@@ -31,11 +31,13 @@ public class ValuationInfo {
     private BigDecimal initialCapital;
     @Column(name = "ANNUAL_EBITDA")
     private BigDecimal annualEbitda;
-    @Column(name = "ANNUAL_SALES_PROFIT")
-    private BigDecimal annualSalesProfit;
+    @Column(name = "ANNUAL_SALES")
+    private BigDecimal annualSales;
     @Column(name = "TTM_NET_PROFIT")
     private BigDecimal ttmNetProfit;
     @Column(name = "PREV_TTM_NET_PROFIT")
     private BigDecimal prevTtmNetProfit;
+    @Column(name = "NET_DEBT")
+    private BigDecimal netDebt;
 
 }

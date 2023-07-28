@@ -1,9 +1,8 @@
 package com.borsaistanbul.stockvaluation.business.scoring;
 
-import com.borsaistanbul.stockvaluation.dto.model.ValuationResult;
+import com.borsaistanbul.stockvaluation.dto.model.ResponseData;
 import org.apache.commons.math3.util.Precision;
 import org.springframework.stereotype.Service;
-
 import java.util.Comparator;
 import java.util.List;
 
@@ -11,10 +10,10 @@ import java.util.List;
 public class StockScoreImpl implements StockScore {
 
     // Scoring based on PEG ratio.
-    public void pegScore(List<ValuationResult> resultList) {
+    public void pegScore(List<ResponseData> resultList) {
         int scoreCounter = resultList.size();
-        resultList.sort(Comparator.comparing(ValuationResult::getPeg));
-        for (ValuationResult x : resultList) {
+        resultList.sort(Comparator.comparing(ResponseData::getPeg));
+        for (ResponseData x : resultList) {
             if (x.getPeg() > 0) {
                 x.setFinalScore(scoreCounter);
                 scoreCounter--;
@@ -25,10 +24,10 @@ public class StockScoreImpl implements StockScore {
     }
 
     // Scoring based on P/B ratio.
-    public void pbScore(List<ValuationResult> resultList) {
+    public void pbScore(List<ResponseData> resultList) {
         int scoreCounter = resultList.size();
-        resultList.sort(Comparator.comparing(ValuationResult::getPb));
-        for (ValuationResult x : resultList) {
+        resultList.sort(Comparator.comparing(ResponseData::getPb));
+        for (ResponseData x : resultList) {
             if (x.getPb() > 0) {
                 x.setFinalScore(x.getFinalScore() + scoreCounter);
                 scoreCounter--;
@@ -37,11 +36,11 @@ public class StockScoreImpl implements StockScore {
     }
 
     // Scoring based on EBITDA Margin sort by highest to lowest.
-    public void ebitdaMarginScore(List<ValuationResult> resultList) {
+    public void ebitdaMarginScore(List<ResponseData> resultList) {
         int scoreCounter = resultList.size();
-        resultList.sort(Comparator.comparing(ValuationResult::getEbitdaMargin).reversed());
-        for (ValuationResult x : resultList) {
-            if (x.getPb() > 0) {
+        resultList.sort(Comparator.comparing(ResponseData::getEbitdaMargin).reversed());
+        for (ResponseData x : resultList) {
+            if (x.getEbitdaMargin() != Double.POSITIVE_INFINITY && x.getEbitdaMargin() != Double.NEGATIVE_INFINITY) {
                 x.setFinalScore(x.getFinalScore() + scoreCounter);
                 scoreCounter--;
             }
@@ -49,42 +48,55 @@ public class StockScoreImpl implements StockScore {
     }
 
     // Scoring based on Net Profit Margin sort by highest to lowest.
-    public void netProfitMarginScore(List<ValuationResult> resultList) {
+    public void netProfitMarginScore(List<ResponseData> resultList) {
         int scoreCounter = resultList.size();
-        resultList.sort(Comparator.comparing(ValuationResult::getNetProfitMargin).reversed());
-        for (ValuationResult x : resultList) {
-            if (x.getPb() > 0) {
+        resultList.sort(Comparator.comparing(ResponseData::getNetProfitMargin).reversed());
+        for (ResponseData x : resultList) {
+            if (x.getNetProfitMargin() != Double.POSITIVE_INFINITY && x.getNetProfitMargin() != Double.NEGATIVE_INFINITY) {
                 x.setFinalScore(x.getFinalScore() + scoreCounter);
                 scoreCounter--;
             }
         }
     }
 
-    public void scoring(List<ValuationResult> resultList) {
+    // Scoring based on net debt to ebitda ratio.
+    public void netDebtToEbitdaScore(List<ResponseData> resultList) {
+        int scoreCounter = resultList.size();
+        resultList.sort(Comparator.comparing(ResponseData::getNetDebtToEbitda));
+        for (ResponseData x : resultList) {
+            x.setFinalScore(x.getFinalScore() + scoreCounter);
+            scoreCounter--;
+        }
+    }
+
+    public void scoring(List<ResponseData> resultList) {
 
         pegScore(resultList);
         pbScore(resultList);
         ebitdaMarginScore(resultList);
         netProfitMarginScore(resultList);
+        netDebtToEbitdaScore(resultList);
 
-        // Total score will divide to count of companies multiply by indicators (4) count and index to 100.
-        resultList.sort(Comparator.comparing(ValuationResult::getFinalScore));
-        for (ValuationResult x : resultList) {
-            double score = Precision.round(x.getFinalScore() / (resultList.size() * 4) * 100, 0);
+        // Total score will divide to count of companies multiply by indicators (5) count and index to 100.
+        resultList.sort(Comparator.comparing(ResponseData::getFinalScore));
+        for (ResponseData x : resultList) {
+            double score = Precision.round(x.getFinalScore() / (resultList.size() * 5) * 100, 0);
             x.setFinalScore(score);
         }
 
         // Total scores will sort by highest to lowest.
-        resultList.sort(Comparator.comparing(ValuationResult::getFinalScore).reversed());
-        for (ValuationResult x : resultList) {
-            if (x.getFinalScore() >= 80) {
+        resultList.sort(Comparator.comparing(ResponseData::getFinalScore).reversed());
+        for (ResponseData x : resultList) {
+            if (x.getFinalScore() >= 85) {
                 x.setSuggestion("Güçlü Al");
             } else if (x.getFinalScore() >= 70) {
                 x.setSuggestion("Al");
-            } else if (x.getFinalScore() >= 50) {
+            } else if (x.getFinalScore() >= 55) {
                 x.setSuggestion("Nötr");
-            } else {
+            } else if (x.getFinalScore() >= 40) {
                 x.setSuggestion("Sat");
+            } else {
+                x.setSuggestion("Güçlü Sat");
             }
         }
     }
