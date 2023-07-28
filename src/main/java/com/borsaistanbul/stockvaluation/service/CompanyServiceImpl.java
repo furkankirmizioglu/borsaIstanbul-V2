@@ -1,7 +1,9 @@
 package com.borsaistanbul.stockvaluation.service;
 
 import com.borsaistanbul.stockvaluation.dto.entity.CompanyInfo;
+import com.borsaistanbul.stockvaluation.exception.StockValuationApiException;
 import com.borsaistanbul.stockvaluation.repository.CompanyInfoRepository;
+import com.borsaistanbul.stockvaluation.utils.ResponseCodes;
 import com.borsaistanbul.stockvaluation.utils.Utils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -49,24 +51,29 @@ public class CompanyServiceImpl implements CompanyService {
             Workbook workbook = new XSSFWorkbook(file);
             Sheet sheet = workbook.getSheetAt(0);
             for (Row row : sheet) {
-                CompanyInfo info = new CompanyInfo();
-                for (Cell cell : row) {
-                    if (cell.getColumnIndex() == 0) {
-                        info.setTicker(cell.getStringCellValue());
-                    } else if (cell.getColumnIndex() == 1) {
-                        info.setTitle(cell.getStringCellValue());
-                    } else if (cell.getColumnIndex() == 2) {
-                        info.setIndustry(cell.getStringCellValue());
-                    }
-                }
-                info.setLastUpdated(Utils.getCurrentDateTimeAsLong());
+                CompanyInfo info = getCompanyInfo(row);
                 toSaveList.add(info);
             }
             companyInfoRepository.saveAll(toSaveList);
             workbook.close();
             file.close();
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new StockValuationApiException(ResponseCodes.API_EXCEPTION, ex.getMessage(), null);
         }
+    }
+
+    private static CompanyInfo getCompanyInfo(Row row) {
+        CompanyInfo info = new CompanyInfo();
+        for (Cell cell : row) {
+            if (cell.getColumnIndex() == 0) {
+                info.setTicker(cell.getStringCellValue());
+            } else if (cell.getColumnIndex() == 1) {
+                info.setTitle(cell.getStringCellValue());
+            } else if (cell.getColumnIndex() == 2) {
+                info.setIndustry(cell.getStringCellValue());
+            }
+        }
+        info.setLastUpdated(Utils.getCurrentDateTimeAsLong());
+        return info;
     }
 }

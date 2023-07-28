@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-public class Response {
+public class ResponseData {
     private String ticker;
     private String companyName;
     private String latestBalanceSheetTerm;

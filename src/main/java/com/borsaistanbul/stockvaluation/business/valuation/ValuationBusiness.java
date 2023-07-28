@@ -1,11 +1,11 @@
 package com.borsaistanbul.stockvaluation.business.valuation;
 
-import com.borsaistanbul.stockvaluation.dto.model.Response;
+import com.borsaistanbul.stockvaluation.dto.model.ResponseData;
 
 import java.util.List;
 
 public interface ValuationBusiness {
 
-    List<Response> business(String industry);
+    List<ResponseData> business(String industry);
 
 }

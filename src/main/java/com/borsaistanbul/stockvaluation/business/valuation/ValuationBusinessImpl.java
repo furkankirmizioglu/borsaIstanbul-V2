@@ -3,25 +3,29 @@ package com.borsaistanbul.stockvaluation.business.valuation;
 import com.borsaistanbul.stockvaluation.client.PriceInfoService;
 import com.borsaistanbul.stockvaluation.dto.entity.ValuationInfo;
 import com.borsaistanbul.stockvaluation.dto.model.FinancialValues;
-import com.borsaistanbul.stockvaluation.dto.model.Response;
+import com.borsaistanbul.stockvaluation.dto.model.ResponseData;
+import com.borsaistanbul.stockvaluation.exception.StockValuationApiException;
 import com.borsaistanbul.stockvaluation.repository.CompanyInfoRepository;
 import com.borsaistanbul.stockvaluation.repository.ValuationInfoRepository;
+import com.borsaistanbul.stockvaluation.utils.CalculateTools;
 import com.borsaistanbul.stockvaluation.utils.Constants;
+import com.borsaistanbul.stockvaluation.utils.ResponseCodes;
 import com.borsaistanbul.stockvaluation.utils.Utils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -29,6 +33,7 @@ import java.util.Optional;
 
 import static com.borsaistanbul.stockvaluation.utils.Constants.FINANCIAL_LIABILITIES;
 
+@Slf4j
 @Service
 public class ValuationBusinessImpl implements ValuationBusiness {
     @Autowired
@@ -37,6 +42,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
     private final ValuationInfoRepository valuationInfoRepository;
     @Autowired
     private final PriceInfoService priceInfoService;
+
 
     public ValuationBusinessImpl(CompanyInfoRepository companyInfoRepository,
                                  ValuationInfoRepository valuationInfoRepository,
@@ -47,12 +53,12 @@ public class ValuationBusinessImpl implements ValuationBusiness {
     }
 
     @Override
-    public List<Response> business(String industry) {
+    public List<ResponseData> business(String industry) {
 
         // Find all tickers matches with given industry info.
         List<String> tickerList = companyInfoRepository.findTickerByIndustry(industry);
 
-        List<Response> responseList = new ArrayList<>();
+        List<ResponseData> responseDataList = new ArrayList<>();
         for (String ticker : tickerList) {
 
             // Go to VALUATION_INFO table for valuation values.
@@ -69,27 +75,32 @@ public class ValuationBusinessImpl implements ValuationBusiness {
             double price = priceInfoService.fetchPriceInfo(ticker);
 
             // Valuation results will put into arraylist.
-            info.ifPresent(valuationInfo -> responseList.add(
-                    Response.builder()
+            info.ifPresent(valuationInfo -> responseDataList.add(
+                    ResponseData.builder()
                             .price(price)
                             .companyName(companyName)
                             .ticker(valuationInfo.getTicker())
                             .latestBalanceSheetTerm(valuationInfo.getBalanceSheetTerm())
-                            .pb(Utils.priceToBookRatio(price, valuationInfo))
-                            .pe(Utils.priceToEarnings(price, valuationInfo))
-                            .peg(Utils.priceToEarningsGrowth(price, valuationInfo))
-                            .ebitdaMargin(Utils.ebitdaMargin(valuationInfo))
-                            .netDebtToEbitda(Utils.netDebtToEbitda(valuationInfo))
-                            .netProfitMargin(Utils.netProfitMargin(valuationInfo)).build()));
+                            .pb(CalculateTools.priceToBookRatio(price, valuationInfo))
+                            .pe(CalculateTools.priceToEarnings(price, valuationInfo))
+                            .peg(CalculateTools.priceToEarningsGrowth(price, valuationInfo))
+                            .ebitdaMargin(CalculateTools.ebitdaMargin(valuationInfo))
+                            .netDebtToEbitda(CalculateTools.netDebtToEbitda(valuationInfo))
+                            .netProfitMargin(CalculateTools.netProfitMargin(valuationInfo)).build()));
         }
-        return responseList;
+        return responseDataList;
     }
 
     private void fetchFinancialTables(String ticker, String industry) {
+        log.debug("Dummy log for industry: {}", industry);
+        XSSFWorkbook workbook = getExcelFile(ticker);
 
+        saveValuationInfo(ticker, workbook);
+    }
+
+    private static XSSFWorkbook getExcelFile(String ticker) {
         try {
-            String urlStr = "https://fintables.com/sirketler/" + ticker + "/finansal-tablolar/excel?currency=";
-            URL url = new URL(urlStr);
+            URL url = ResourceUtils.toURL(MessageFormat.format(Constants.FINTABLES, ticker));
             URLConnection uc = url.openConnection();
             uc.addRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0");
             InputStream inputStream = uc.getInputStream();
@@ -103,100 +114,13 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                 fileOutputStream.write(buffer, 0, bytesRead);
             }
             fileOutputStream.close();
-
-            // Parse the Excel file.
-            XSSFWorkbook workbook = new XSSFWorkbook(fileName);
-
-            if (industry.equals("Bankacılık") || industry.equals("Aracı Kurumlar")) {
-                saveValuationInfoBanking(ticker, workbook);
-            } else if (industry.equals("Sigorta")) {
-                saveValuationInfoInsurance(ticker, workbook);
-            } else {
-                saveValuationInfo(ticker, workbook);
-            }
-
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+            return new XSSFWorkbook(fileName);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new StockValuationApiException(ResponseCodes.API_EXCEPTION, e.getMessage(), null);
         }
     }
 
     private void saveValuationInfo(String ticker, XSSFWorkbook workbook) {
-
-        FinancialValues values = new FinancialValues();
-
-        XSSFSheet balanceSheet = workbook.getSheetAt(0);
-        XSSFSheet annualProfitSheet = workbook.getSheetAt(3);
-        XSSFSheet annualCashFlowSheet = workbook.getSheetAt(6);
-
-        balanceSheetParser(values, balanceSheet);
-        annualProfitSheetParser(values, annualProfitSheet);
-        annualCashFlowSheetParser(values, annualCashFlowSheet);
-
-        BigDecimal netDebt = values.getTotalFinancialLiabilities()
-                .subtract(values.getCashAndEquivalents())
-                .subtract(values.getFinancialInvestments());
-
-        BigDecimal annualEbitda = values.getGrossProfit()
-                .add(values.getAdministrativeExpenses())
-                .add(values.getMarketingSalesDistributionExpenses())
-                .add(values.getResearchDevelopmentExpenses())
-                .add(values.getDepreciationAmortization());
-
-        ValuationInfo entity = new ValuationInfo();
-        entity.setAnnualEbitda(annualEbitda);
-        entity.setAnnualSales(values.getAnnualSales());
-        entity.setBalanceSheetTerm(balanceSheet.getRow(0).getCell(1).getStringCellValue());
-        entity.setEquity(values.getEquities());
-        entity.setInitialCapital(values.getInitialCapital());
-        entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
-        entity.setNetDebt(netDebt);
-        entity.setPrevTtmNetProfit(values.getPrevTtmNetProfit());
-        entity.setTtmNetProfit(values.getTtmNetProfit());
-        entity.setTicker(ticker);
-        valuationInfoRepository.save(entity);
-    }
-
-    private void saveValuationInfoBanking(String ticker, XSSFWorkbook workbook) {
-
-        FinancialValues values = new FinancialValues();
-
-        XSSFSheet balanceSheet = workbook.getSheetAt(0);
-        XSSFSheet annualProfitSheet = workbook.getSheetAt(3);
-        XSSFSheet annualCashFlowSheet = workbook.getSheetAt(6);
-
-        balanceSheetParser(values, balanceSheet);
-        annualProfitSheetParser(values, annualProfitSheet);
-        annualCashFlowSheetParser(values, annualCashFlowSheet);
-
-        BigDecimal netDebt = values.getTotalFinancialLiabilities()
-                .subtract(values.getCashAndEquivalents())
-                .subtract(values.getFinancialInvestments());
-
-        BigDecimal annualEbitda = values.getGrossProfit()
-                .add(values.getAdministrativeExpenses())
-                .add(values.getMarketingSalesDistributionExpenses())
-                .add(values.getResearchDevelopmentExpenses())
-                .add(values.getDepreciationAmortization());
-
-        ValuationInfo entity = new ValuationInfo();
-        entity.setAnnualEbitda(annualEbitda);
-        entity.setAnnualSales(values.getAnnualSales());
-        entity.setBalanceSheetTerm(balanceSheet.getRow(0).getCell(1).getStringCellValue());
-        entity.setEquity(values.getEquities());
-        entity.setInitialCapital(values.getInitialCapital());
-        entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
-        entity.setNetDebt(netDebt);
-        entity.setPrevTtmNetProfit(values.getPrevTtmNetProfit());
-        entity.setTtmNetProfit(values.getTtmNetProfit());
-        entity.setTicker(ticker);
-        valuationInfoRepository.save(entity);
-    }
-
-    private void saveValuationInfoInsurance(String ticker, XSSFWorkbook workbook) {
 
         FinancialValues values = new FinancialValues();
 
@@ -239,15 +163,19 @@ public class ValuationBusinessImpl implements ValuationBusiness {
             if (row.getCell(0) != null) {
                 switch (row.getCell(0).getStringCellValue().trim()) {
                     case FINANCIAL_LIABILITIES -> values.setTotalFinancialLiabilities(
-                            values.getTotalFinancialLiabilities().add(Utils.cellValue(row, 1)));
-                    case Constants.CASH_AND_EQUIVALENTS -> values.setCashAndEquivalents(Utils.cellValue(row, 1));
+                            values.getTotalFinancialLiabilities().add(CalculateTools.cellValue(row, 1)));
+                    case Constants.CASH_AND_EQUIVALENTS ->
+                            values.setCashAndEquivalents(CalculateTools.cellValue(row, 1));
                     case Constants.FINANCIAL_INVESTMENTS -> {
                         if (Objects.equals(values.getFinancialInvestments(), BigDecimal.ZERO)) {
-                            values.setFinancialInvestments(Utils.cellValue(row, 1));
+                            values.setFinancialInvestments(CalculateTools.cellValue(row, 1));
                         }
                     }
-                    case Constants.EQUITIES -> values.setEquities(Utils.cellValue(row, 1));
-                    case Constants.INITIAL_CAPITAL -> values.setInitialCapital(Utils.cellValue(row, 1));
+                    case Constants.EQUITIES -> values.setEquities(CalculateTools.cellValue(row, 1));
+                    case Constants.INITIAL_CAPITAL -> values.setInitialCapital(CalculateTools.cellValue(row, 1));
+                    default -> {
+                        // no need to any operation
+                    }
                 }
             }
         }
@@ -258,16 +186,20 @@ public class ValuationBusinessImpl implements ValuationBusiness {
             Row row = annualProfitSheet.getRow(i);
             if (row.getCell(0) != null) {
                 switch (row.getCell(0).getStringCellValue().trim()) {
-                    case Constants.INCOME_FROM_SALES -> values.setAnnualSales(Utils.cellValue(row, 1));
-                    case Constants.GROSS_PROFIT -> values.setGrossProfit(Utils.cellValue(row, 1));
-                    case Constants.ADMINISTRATIVE_EXPENSES -> values.setAdministrativeExpenses(Utils.cellValue(row, 1));
+                    case Constants.INCOME_FROM_SALES -> values.setAnnualSales(CalculateTools.cellValue(row, 1));
+                    case Constants.GROSS_PROFIT -> values.setGrossProfit(CalculateTools.cellValue(row, 1));
+                    case Constants.ADMINISTRATIVE_EXPENSES ->
+                            values.setAdministrativeExpenses(CalculateTools.cellValue(row, 1));
                     case Constants.MARKETING_SALES_DISTRIBUTION_EXPENSES ->
-                            values.setMarketingSalesDistributionExpenses(Utils.cellValue(row, 1));
+                            values.setMarketingSalesDistributionExpenses(CalculateTools.cellValue(row, 1));
                     case Constants.RESEARCH_DEVELOPMENT_EXPENSES ->
-                            values.setResearchDevelopmentExpenses(Utils.cellValue(row, 1));
+                            values.setResearchDevelopmentExpenses(CalculateTools.cellValue(row, 1));
                     case Constants.PARENT_COMPANY_SHARES -> {
-                        values.setTtmNetProfit(Utils.cellValue(row, 1));
-                        values.setPrevTtmNetProfit(Utils.cellValue(row, 5));
+                        values.setTtmNetProfit(CalculateTools.cellValue(row, 1));
+                        values.setPrevTtmNetProfit(CalculateTools.cellValue(row, 5));
+                    }
+                    default -> {
+                        // no need to any operation
                     }
                 }
             }
@@ -279,7 +211,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         for (int k = 0; k < annualCashFlowSheet.getPhysicalNumberOfRows(); k++) {
             Row row = annualCashFlowSheet.getRow(k);
             if (row.getCell(0) != null && row.getCell(0).getStringCellValue().trim().equals(Constants.DEPRECIATION_AND_AMORTIZATION)) {
-                values.setDepreciationAmortization(Utils.cellValue(row, 1));
+                values.setDepreciationAmortization(CalculateTools.cellValue(row, 1));
             }
         }
     }

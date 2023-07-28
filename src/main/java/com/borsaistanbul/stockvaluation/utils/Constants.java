@@ -1,12 +1,10 @@
 package com.borsaistanbul.stockvaluation.utils;
 
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
 public class Constants {
-
-
-    private Constants() {
-        throw new IllegalStateException("Utility class");
-    }
-
+    public static final String FINTABLES = "https://fintables.com/sirketler/{0}/finansal-tablolar/excel?currency=";
     public static final String INITIAL_CAPITAL = "Ödenmiş Sermaye";
     public static final String CASH_AND_EQUIVALENTS = "Nakit ve Nakit Benzerleri";
     public static final String FINANCIAL_LIABILITIES = "Finansal Borçlar";

@@ -2,7 +2,7 @@ package com.borsaistanbul.stockvaluation.service;
 
 import com.borsaistanbul.stockvaluation.business.scoring.StockScore;
 import com.borsaistanbul.stockvaluation.business.valuation.ValuationBusiness;
-import com.borsaistanbul.stockvaluation.dto.model.Response;
+import com.borsaistanbul.stockvaluation.dto.model.ResponseData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,12 +22,12 @@ public class ValuationServiceImpl implements ValuationService {
     }
 
     @Override
-    public List<Response> valuation(String industry) {
+    public List<ResponseData> valuation(String industry) {
 
-        List<Response> responseList = valuationBusiness.business(industry);
+        List<ResponseData> responseDataList = valuationBusiness.business(industry);
 
         // Sort the valuationResultList by finalScore and send response to UI.
-        stockScore.scoring(responseList);
-        return responseList;
+        stockScore.scoring(responseDataList);
+        return responseDataList;
     }
 }
