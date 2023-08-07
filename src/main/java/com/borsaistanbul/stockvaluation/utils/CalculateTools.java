@@ -1,6 +1,7 @@
 package com.borsaistanbul.stockvaluation.utils;
 
 import com.borsaistanbul.stockvaluation.dto.entity.ValuationInfo;
+import com.borsaistanbul.stockvaluation.dto.model.FinancialValues;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.math3.util.Precision;
 import org.apache.poi.ss.usermodel.Row;
@@ -43,4 +44,19 @@ public class CalculateTools {
     public static double netDebtToEbitda(ValuationInfo valuationInfo) {
         return Precision.round(valuationInfo.getNetDebt().doubleValue() / valuationInfo.getAnnualEbitda().doubleValue(), 2);
     }
+
+    public static BigDecimal ebitda(FinancialValues values) {
+        return values.getGrossProfit()
+                .add(values.getAdministrativeExpenses())
+                .add(values.getMarketingSalesDistributionExpenses())
+                .add(values.getResearchDevelopmentExpenses())
+                .add(values.getAmortization());
+    }
+
+    public static BigDecimal netDebt(FinancialValues values) {
+        return values.getTotalFinancialLiabilities()
+                .subtract(values.getCashAndEquivalents())
+                .subtract(values.getFinancialInvestments());
+    }
+
 }

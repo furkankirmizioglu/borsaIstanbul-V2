@@ -69,12 +69,9 @@ public class ValuationBusinessImpl implements ValuationBusiness {
             String companyName = companyInfoRepository.findCompanyNameByTicker(ticker);
 
             if (info.isEmpty()) {
-                log.info("{} için veri tabanında bilanço bilgisi bulunamadı. Bilanço tarama başlatılıyor...", ticker);
                 fetchFinancialTables(ticker);
                 info = valuationInfoRepository.findAllByTicker(ticker);
             }
-
-            log.info("{} için değerleme işlemi başladı...", ticker);
 
             double price = priceInfoService.fetchPriceInfo(ticker);
 
@@ -99,8 +96,13 @@ public class ValuationBusinessImpl implements ValuationBusiness {
     }
 
     private void fetchFinancialTables(String ticker) {
-        XSSFWorkbook workbook = getExcelFile(ticker);
-        saveValuationInfo(ticker, workbook);
+        try {
+            XSSFWorkbook workbook = getExcelFile(ticker);
+            saveValuationInfo(ticker, workbook);
+            workbook.close();
+        } catch (IOException ex) {
+            throw new StockValuationApiException(ResponseCodes.UNKNOWN_ERROR, ex.getMessage(), null);
+        }
     }
 
     private static XSSFWorkbook getExcelFile(String ticker) {
@@ -118,6 +120,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
             while ((bytesRead = inputStream.read(buffer)) != -1) {
                 fileOutputStream.write(buffer, 0, bytesRead);
             }
+            inputStream.close();
             fileOutputStream.close();
             return new XSSFWorkbook(fileName);
         } catch (IOException e) {
@@ -131,35 +134,23 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
         XSSFSheet balanceSheet = workbook.getSheetAt(0);
         XSSFSheet annualProfitSheet = workbook.getSheetAt(3);
-        XSSFSheet annualCashFlowSheet = workbook.getSheetAt(6);
 
         balanceSheetParser(values, balanceSheet);
         annualProfitSheetParser(values, annualProfitSheet);
-        annualCashFlowSheetParser(values, annualCashFlowSheet);
-
-        BigDecimal netDebt = values.getTotalFinancialLiabilities()
-                .subtract(values.getCashAndEquivalents())
-                .subtract(values.getFinancialInvestments());
-
-        BigDecimal annualEbitda = values.getGrossProfit()
-                .add(values.getAdministrativeExpenses())
-                .add(values.getMarketingSalesDistributionExpenses())
-                .add(values.getResearchDevelopmentExpenses())
-                .add(values.getDepreciationAmortization());
 
         ValuationInfo entity = new ValuationInfo();
-        entity.setAnnualEbitda(annualEbitda);
+        entity.setAnnualEbitda(CalculateTools.ebitda(values));
         entity.setAnnualSales(values.getAnnualSales());
         entity.setBalanceSheetTerm(balanceSheet.getRow(0).getCell(1).getStringCellValue());
         entity.setEquity(values.getEquities());
         entity.setInitialCapital(values.getInitialCapital());
         entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
-        entity.setNetDebt(netDebt);
+        entity.setNetDebt(CalculateTools.netDebt(values));
         entity.setPrevTtmNetProfit(values.getPrevTtmNetProfit());
         entity.setTtmNetProfit(values.getTtmNetProfit());
         entity.setTicker(ticker);
         valuationInfoRepository.save(entity);
-        log.info("{} için bilanço tarama işlemi başarıyla tamamlandı ve veri tabanına kaydedildi.", ticker);
+        log.info("{} için bilanço kaydetme başarıyla tamamlandı.", ticker);
     }
 
     private void balanceSheetParser(FinancialValues values, XSSFSheet balanceSheet) {
@@ -204,6 +195,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                         values.setTtmNetProfit(CalculateTools.cellValue(row, 1));
                         values.setPrevTtmNetProfit(CalculateTools.cellValue(row, 5));
                     }
+                    case Constants.AMORTIZATION -> values.setAmortization(CalculateTools.cellValue(row, 1));
                     default -> {
                         // no need to any operation
                     }
@@ -211,15 +203,6 @@ public class ValuationBusinessImpl implements ValuationBusiness {
             }
         }
 
-    }
-
-    private void annualCashFlowSheetParser(FinancialValues values, XSSFSheet annualCashFlowSheet) {
-        for (int k = 0; k < annualCashFlowSheet.getPhysicalNumberOfRows(); k++) {
-            Row row = annualCashFlowSheet.getRow(k);
-            if (row.getCell(0) != null && row.getCell(0).getStringCellValue().trim().equals(Constants.DEPRECIATION_AND_AMORTIZATION)) {
-                values.setDepreciationAmortization(CalculateTools.cellValue(row, 1));
-            }
-        }
     }
 
 }

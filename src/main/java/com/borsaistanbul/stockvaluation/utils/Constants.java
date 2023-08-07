@@ -16,5 +16,5 @@ public class Constants {
     public static final String ADMINISTRATIVE_EXPENSES = "Genel Yönetim Giderleri (-)";
     public static final String MARKETING_SALES_DISTRIBUTION_EXPENSES = "Pazarlama, Satış ve Dağıtım Giderleri (-)";
     public static final String RESEARCH_DEVELOPMENT_EXPENSES = "Araştırma ve Geliştirme Giderleri (-)";
-    public static final String DEPRECIATION_AND_AMORTIZATION = "Amortisman ve İtfa Gideri İle İlgili Düzeltmeler";
+    public static final String AMORTIZATION = "Amortisman";
 }
