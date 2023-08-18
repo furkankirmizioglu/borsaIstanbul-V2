@@ -22,9 +22,15 @@ public class FinancialValues {
 
     private BigDecimal equities = BigDecimal.ZERO;
     private BigDecimal initialCapital = BigDecimal.ZERO;
+    private BigDecimal totalAssets = BigDecimal.ZERO;
+    private BigDecimal totalShortTermLiabilities = BigDecimal.ZERO;
+    private BigDecimal totalLongTermLiabilities = BigDecimal.ZERO;
 
     private BigDecimal annualSales = BigDecimal.ZERO;
     private BigDecimal ttmNetProfit = BigDecimal.ZERO;
     private BigDecimal prevTtmNetProfit = BigDecimal.ZERO;
+
+
+
 
 }

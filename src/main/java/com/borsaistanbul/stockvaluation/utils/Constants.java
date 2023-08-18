@@ -17,4 +17,7 @@ public class Constants {
     public static final String MARKETING_SALES_DISTRIBUTION_EXPENSES = "Pazarlama, Satış ve Dağıtım Giderleri (-)";
     public static final String RESEARCH_DEVELOPMENT_EXPENSES = "Araştırma ve Geliştirme Giderleri (-)";
     public static final String AMORTIZATION = "Amortisman";
+    public static final String TOTAL_ASSETS = "Toplam Varlıklar";
+    public static final String TOTAL_SHORT_TERM_LIABILITIES = "Toplam Kısa Vadeli Yükümlülükler";
+    public static final String TOTAL_LONG_TERM_LIABILITIES = "Toplam Uzun Vadeli Yükümlülükler";
 }

@@ -39,5 +39,11 @@ public class ValuationInfo {
     private BigDecimal prevTtmNetProfit;
     @Column(name = "NET_DEBT")
     private BigDecimal netDebt;
+    @Column(name = "TOTAL_ASSETS")
+    private BigDecimal totalAssets;
+    @Column(name = "LONG_TERM_LIABILITIES")
+    private BigDecimal longTermLiabilities;
+    @Column(name = "SHORT_TERM_LIABILITIES")
+    private BigDecimal shortTermLiabilities;
 
 }

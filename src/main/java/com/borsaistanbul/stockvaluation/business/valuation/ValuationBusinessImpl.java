@@ -87,7 +87,9 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                             .peg(CalculateTools.priceToEarningsGrowth(price, valuationInfo))
                             .ebitdaMargin(CalculateTools.ebitdaMargin(valuationInfo))
                             .netDebtToEbitda(CalculateTools.netDebtToEbitda(valuationInfo))
-                            .netProfitMargin(CalculateTools.netProfitMargin(valuationInfo)).build()));
+                            .netProfitMargin(CalculateTools.netProfitMargin(valuationInfo))
+                            .leverageRatio(CalculateTools.leverageRatio(valuationInfo))
+                            .build()));
 
             log.info("{} için değerleme işlemi tamamlandı...", ticker);
         }
@@ -149,6 +151,9 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         entity.setPrevTtmNetProfit(values.getPrevTtmNetProfit());
         entity.setTtmNetProfit(values.getTtmNetProfit());
         entity.setTicker(ticker);
+        entity.setTotalAssets(values.getTotalAssets());
+        entity.setLongTermLiabilities(values.getTotalLongTermLiabilities());
+        entity.setShortTermLiabilities(values.getTotalShortTermLiabilities());
         valuationInfoRepository.save(entity);
         log.info("{} için bilanço kaydetme başarıyla tamamlandı.", ticker);
     }
@@ -170,6 +175,11 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                     }
                     case Constants.EQUITIES -> values.setEquities(CalculateTools.cellValue(row, 1));
                     case Constants.INITIAL_CAPITAL -> values.setInitialCapital(CalculateTools.cellValue(row, 1));
+                    case Constants.TOTAL_ASSETS -> values.setTotalAssets(CalculateTools.cellValue(row, 1));
+                    case Constants.TOTAL_LONG_TERM_LIABILITIES ->
+                            values.setTotalLongTermLiabilities(CalculateTools.cellValue(row, 1));
+                    case Constants.TOTAL_SHORT_TERM_LIABILITIES ->
+                            values.setTotalShortTermLiabilities(CalculateTools.cellValue(row, 1));
                     default -> {
                         // no need to any operation
                     }

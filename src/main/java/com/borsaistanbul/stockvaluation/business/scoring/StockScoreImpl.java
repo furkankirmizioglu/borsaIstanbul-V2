@@ -69,6 +69,15 @@ public class StockScoreImpl implements StockScore {
         }
     }
 
+    public void leverageRatioScore(List<ResponseData> resultList) {
+        int scoreCounter = resultList.size();
+        resultList.sort(Comparator.comparing(ResponseData::getLeverageRatio));
+        for (ResponseData x : resultList) {
+            x.setFinalScore(x.getFinalScore() + scoreCounter);
+            scoreCounter--;
+        }
+    }
+
     public void scoring(List<ResponseData> resultList) {
 
         pegScore(resultList);
@@ -76,11 +85,12 @@ public class StockScoreImpl implements StockScore {
         ebitdaMarginScore(resultList);
         netProfitMarginScore(resultList);
         netDebtToEbitdaScore(resultList);
+        leverageRatioScore(resultList);
 
-        // Total score will divide to count of companies multiply by indicators (5) count and index to 100.
+        // Total score will divide to count of companies multiply by indicators (6) count and index to 100.
         resultList.sort(Comparator.comparing(ResponseData::getFinalScore));
         for (ResponseData x : resultList) {
-            double score = Precision.round(x.getFinalScore() / (resultList.size() * 5) * 100, 0);
+            double score = Precision.round(x.getFinalScore() / (resultList.size() * 6) * 100, 0);
             x.setFinalScore(score);
         }
 

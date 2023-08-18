@@ -37,6 +37,11 @@ public class CalculateTools {
         return Precision.round(info.getAnnualEbitda().doubleValue() / (info.getAnnualSales()).doubleValue() * 100, 2);
     }
 
+    public static double leverageRatio(ValuationInfo info) {
+        BigDecimal totalLiabilities = info.getLongTermLiabilities().add(info.getShortTermLiabilities());
+        return Precision.round(totalLiabilities.doubleValue() / info.getTotalAssets().doubleValue() * 100, 2);
+    }
+
     public static BigDecimal cellValue(Row row, int i) {
         return (row.getCell(i) != null) ? BigDecimal.valueOf(row.getCell(i).getNumericCellValue()) : BigDecimal.ZERO;
     }
@@ -58,5 +63,6 @@ public class CalculateTools {
                 .subtract(values.getCashAndEquivalents())
                 .subtract(values.getFinancialInvestments());
     }
+
 
 }

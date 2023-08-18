@@ -18,6 +18,7 @@ public class ResponseData {
     private double ebitdaMargin;
     private double netProfitMargin;
     private double netDebtToEbitda;
+    private double leverageRatio;
     private double finalScore;
     private String suggestion;
 }
