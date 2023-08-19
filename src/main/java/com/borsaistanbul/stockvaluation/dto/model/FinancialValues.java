@@ -18,12 +18,19 @@ public class FinancialValues {
     private BigDecimal administrativeExpenses = BigDecimal.ZERO;
     private BigDecimal marketingSalesDistributionExpenses = BigDecimal.ZERO;
     private BigDecimal researchDevelopmentExpenses = BigDecimal.ZERO;
-    private BigDecimal depreciationAmortization = BigDecimal.ZERO;
+    private BigDecimal amortization = BigDecimal.ZERO;
 
     private BigDecimal equities = BigDecimal.ZERO;
     private BigDecimal initialCapital = BigDecimal.ZERO;
+    private BigDecimal totalAssets = BigDecimal.ZERO;
+    private BigDecimal totalShortTermLiabilities = BigDecimal.ZERO;
+    private BigDecimal totalLongTermLiabilities = BigDecimal.ZERO;
 
     private BigDecimal annualSales = BigDecimal.ZERO;
     private BigDecimal ttmNetProfit = BigDecimal.ZERO;
     private BigDecimal prevTtmNetProfit = BigDecimal.ZERO;
+
+
+
+
 }

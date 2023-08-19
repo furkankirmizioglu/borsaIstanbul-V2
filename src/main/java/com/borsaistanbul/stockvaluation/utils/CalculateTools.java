@@ -1,6 +1,7 @@
 package com.borsaistanbul.stockvaluation.utils;
 
 import com.borsaistanbul.stockvaluation.dto.entity.ValuationInfo;
+import com.borsaistanbul.stockvaluation.dto.model.FinancialValues;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.math3.util.Precision;
 import org.apache.poi.ss.usermodel.Row;
@@ -36,6 +37,11 @@ public class CalculateTools {
         return Precision.round(info.getAnnualEbitda().doubleValue() / (info.getAnnualSales()).doubleValue() * 100, 2);
     }
 
+    public static double leverageRatio(ValuationInfo info) {
+        BigDecimal totalLiabilities = info.getLongTermLiabilities().add(info.getShortTermLiabilities());
+        return Precision.round(totalLiabilities.doubleValue() / info.getTotalAssets().doubleValue() * 100, 2);
+    }
+
     public static BigDecimal cellValue(Row row, int i) {
         return (row.getCell(i) != null) ? BigDecimal.valueOf(row.getCell(i).getNumericCellValue()) : BigDecimal.ZERO;
     }
@@ -43,4 +49,20 @@ public class CalculateTools {
     public static double netDebtToEbitda(ValuationInfo valuationInfo) {
         return Precision.round(valuationInfo.getNetDebt().doubleValue() / valuationInfo.getAnnualEbitda().doubleValue(), 2);
     }
+
+    public static BigDecimal ebitda(FinancialValues values) {
+        return values.getGrossProfit()
+                .add(values.getAdministrativeExpenses())
+                .add(values.getMarketingSalesDistributionExpenses())
+                .add(values.getResearchDevelopmentExpenses())
+                .add(values.getAmortization());
+    }
+
+    public static BigDecimal netDebt(FinancialValues values) {
+        return values.getTotalFinancialLiabilities()
+                .subtract(values.getCashAndEquivalents())
+                .subtract(values.getFinancialInvestments());
+    }
+
+
 }
