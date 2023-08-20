@@ -64,9 +64,9 @@ class ValuationBusinessImplTest {
 
 
         valuationBusiness = new ValuationBusinessImpl(companyInfoRepository, valuationInfoRepository, priceInfoService);
-        industry = "Bankacılık";
+        industry = "Otomotiv";
 
-        tickerList.add("GARAN");
+        tickerList.add("FROTO");
 
         valuationInfo1 = new ValuationInfo();
         valuationInfo1.setGuid(123L);
