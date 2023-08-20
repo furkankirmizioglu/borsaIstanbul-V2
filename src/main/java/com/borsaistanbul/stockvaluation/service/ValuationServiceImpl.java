@@ -27,7 +27,7 @@ public class ValuationServiceImpl implements ValuationService {
         List<ResponseData> responseDataList = valuationBusiness.business(industry);
 
         // Sort the valuationResultList by finalScore and send response to UI.
-        stockScore.scoring(responseDataList);
+        responseDataList = stockScore.scoring(responseDataList);
         return responseDataList;
     }
 }
