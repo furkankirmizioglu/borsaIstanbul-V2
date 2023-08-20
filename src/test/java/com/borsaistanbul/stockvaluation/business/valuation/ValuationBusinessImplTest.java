@@ -5,52 +5,68 @@ import com.borsaistanbul.stockvaluation.dto.entity.ValuationInfo;
 import com.borsaistanbul.stockvaluation.dto.model.ResponseData;
 import com.borsaistanbul.stockvaluation.repository.CompanyInfoRepository;
 import com.borsaistanbul.stockvaluation.repository.ValuationInfoRepository;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.ResourceUtils;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.math.BigDecimal;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 class ValuationBusinessImplTest {
 
-
     @Mock
-    private CompanyInfoRepository companyInfoRepository;
-
+    ResourceUtils resourceUtils;
+    @Mock
+    CompanyInfoRepository companyInfoRepository;
     @Autowired
-    private ValuationInfoRepository valuationInfoRepository;
-
+    ValuationInfoRepository valuationInfoRepository;
     @Autowired
-    private PriceInfoService priceInfoService;
-
-    private ValuationBusinessImpl valuationBusiness;
-
-    private String industry;
-
-    private final List<String> tickerList = new ArrayList<>();
-
-    private ValuationInfo valuationInfo1;
+    PriceInfoService priceInfoService;
+    ValuationBusinessImpl valuationBusiness;
+    String industry;
+    final List<String> tickerList = new ArrayList<>();
+    ValuationInfo valuationInfo1;
+    @Mock
+    URI mockUri;
+    @Mock
+    URL mockUrl;
+    @Mock
+    URLConnection urlConnection;
+    @Mock
+    InputStream targetStream;
 
     @BeforeEach
     void init() {
-        companyInfoRepository = Mockito.mock(CompanyInfoRepository.class);
-        valuationInfoRepository = Mockito.mock(ValuationInfoRepository.class);
-        priceInfoService = Mockito.mock(PriceInfoService.class);
+        companyInfoRepository = mock(CompanyInfoRepository.class);
+        valuationInfoRepository = mock(ValuationInfoRepository.class);
+        priceInfoService = mock(PriceInfoService.class);
+        resourceUtils = mock(ResourceUtils.class);
+        urlConnection = mock(URLConnection.class);
+        mockUri = mock(URI.class);
+        mockUrl = mock(URL.class);
+
+        targetStream = mock(InputStream.class);
+
+
         valuationBusiness = new ValuationBusinessImpl(companyInfoRepository, valuationInfoRepository, priceInfoService);
         industry = "Bankacılık";
 
         tickerList.add("GARAN");
-        tickerList.add("YKBNK");
-
 
         valuationInfo1 = new ValuationInfo();
         valuationInfo1.setGuid(123L);
@@ -84,5 +100,30 @@ class ValuationBusinessImplTest {
         Assertions.assertNotNull(responseDataList.get(0));
 
     }
+
+    @Test
+    @SneakyThrows
+    void businessTestValuationInfoNotFound() {
+
+        when(companyInfoRepository.findTickerByIndustry(anyString())).thenReturn(tickerList);
+        when(valuationInfoRepository.findGuidByTicker(anyString())).thenReturn(Optional.empty());
+        when(companyInfoRepository.findCompanyNameByTicker(anyString())).thenReturn("TEST_COMPANY");
+        when(priceInfoService.fetchPriceInfo(anyString())).thenReturn(10.00);
+
+        File initialFile = new File("src/main/resources/static/unittestreport.xlsx");
+        InputStream targetStream = new FileInputStream(initialFile);
+
+        // TODO -> You have to mock the URL so it shouldn't go to FinTables actually.
+        when(mockUrl.openConnection()).thenReturn(urlConnection);
+        when(urlConnection.getInputStream()).thenReturn(targetStream);
+        when(valuationInfoRepository.save(any(ValuationInfo.class))).thenReturn(null);
+        when(valuationInfoRepository.findAllByTicker(anyString())).thenReturn(Optional.of(valuationInfo1));
+
+        List<ResponseData> responseDataList = valuationBusiness.business(industry);
+        Assertions.assertNotNull(responseDataList.get(0));
+
+    }
+
+
 
 }

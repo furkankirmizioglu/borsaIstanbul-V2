@@ -65,13 +65,15 @@ public class ValuationBusinessImpl implements ValuationBusiness {
             // Go to VALUATION_INFO table for valuation values.
             // If response is null,
             // then we have to fetch balance sheet data from FinTables, insert into table and inquiry again.
-            Optional<ValuationInfo> info = valuationInfoRepository.findAllByTicker(ticker);
             String companyName = companyInfoRepository.findCompanyNameByTicker(ticker);
 
-            if (info.isEmpty()) {
+            Optional<BigDecimal> guid = valuationInfoRepository.findGuidByTicker(ticker);
+
+            if (guid.isEmpty()) {
                 fetchFinancialTables(ticker);
-                info = valuationInfoRepository.findAllByTicker(ticker);
             }
+
+            Optional<ValuationInfo> info = valuationInfoRepository.findAllByTicker(ticker);
 
             double price = priceInfoService.fetchPriceInfo(ticker);
 
