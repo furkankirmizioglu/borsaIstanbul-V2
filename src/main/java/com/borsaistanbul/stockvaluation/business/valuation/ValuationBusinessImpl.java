@@ -36,14 +36,12 @@ import static com.borsaistanbul.stockvaluation.utils.Constants.FINANCIAL_LIABILI
 @Slf4j
 @Service
 public class ValuationBusinessImpl implements ValuationBusiness {
-    @Autowired
+
     private final CompanyInfoRepository companyInfoRepository;
-    @Autowired
     private final ValuationInfoRepository valuationInfoRepository;
-    @Autowired
     private final PriceInfoService priceInfoService;
 
-
+    @Autowired
     public ValuationBusinessImpl(CompanyInfoRepository companyInfoRepository,
                                  ValuationInfoRepository valuationInfoRepository,
                                  PriceInfoService priceInfoService) {
@@ -56,28 +54,19 @@ public class ValuationBusinessImpl implements ValuationBusiness {
     public List<ResponseData> business(String industry) {
         log.info("{} sektörü için değerleme hesaplamaları başladı...", industry);
 
-        // Find all tickers matches with given industry info.
         List<String> tickerList = companyInfoRepository.findTickerByIndustry(industry);
 
         List<ResponseData> responseDataList = new ArrayList<>();
         for (String ticker : tickerList) {
 
-            // Go to VALUATION_INFO table for valuation values.
-            // If response is null,
-            // then we have to fetch balance sheet data from FinTables, insert into table and inquiry again.
             String companyName = companyInfoRepository.findCompanyNameByTicker(ticker);
-
-            Optional<BigDecimal> guid = valuationInfoRepository.findGuidByTicker(ticker);
-
-            if (guid.isEmpty()) {
-                fetchFinancialTables(ticker);
-            }
-
             Optional<ValuationInfo> info = valuationInfoRepository.findAllByTicker(ticker);
-
             double price = priceInfoService.fetchPriceInfo(ticker);
 
-            // Valuation results will put into arraylist.
+            if (info.isEmpty()) {
+                info = Optional.of(fetchFinancialTables(ticker));
+            }
+
             info.ifPresent(valuationInfo -> responseDataList.add(
                     ResponseData.builder()
                             .price(price)
@@ -99,14 +88,16 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         return responseDataList;
     }
 
-    private void fetchFinancialTables(String ticker) {
+    private ValuationInfo fetchFinancialTables(String ticker) {
         try {
             XSSFWorkbook workbook = getExcelFile(ticker);
-            saveValuationInfo(ticker, workbook);
+            ValuationInfo response = saveValuationInfo(ticker, workbook);
             workbook.close();
+            return response;
         } catch (IOException ex) {
             throw new StockValuationApiException(ResponseCodes.UNKNOWN_ERROR, ex.getMessage(), null);
         }
+
     }
 
     private static XSSFWorkbook getExcelFile(String ticker) {
@@ -116,7 +107,6 @@ public class ValuationBusinessImpl implements ValuationBusiness {
             uc.addRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0");
             InputStream inputStream = uc.getInputStream();
 
-            // Save the Excel file to a local file.
             String fileName = "report.xlsx";
             FileOutputStream fileOutputStream = new FileOutputStream(fileName);
             byte[] buffer = new byte[1024];
@@ -132,7 +122,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         }
     }
 
-    private void saveValuationInfo(String ticker, XSSFWorkbook workbook) {
+    private ValuationInfo saveValuationInfo(String ticker, XSSFWorkbook workbook) {
 
         FinancialValues values = new FinancialValues();
 
@@ -158,6 +148,9 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         entity.setShortTermLiabilities(values.getTotalShortTermLiabilities());
         valuationInfoRepository.save(entity);
         log.info("{} için bilanço kaydetme başarıyla tamamlandı.", ticker);
+
+        return entity;
+
     }
 
     private void balanceSheetParser(FinancialValues values, XSSFSheet balanceSheet) {

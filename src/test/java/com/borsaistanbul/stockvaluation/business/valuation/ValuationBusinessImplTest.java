@@ -106,7 +106,6 @@ class ValuationBusinessImplTest {
     void businessTestValuationInfoNotFound() {
 
         when(companyInfoRepository.findTickerByIndustry(anyString())).thenReturn(tickerList);
-        when(valuationInfoRepository.findGuidByTicker(anyString())).thenReturn(Optional.empty());
         when(companyInfoRepository.findCompanyNameByTicker(anyString())).thenReturn("TEST_COMPANY");
         when(priceInfoService.fetchPriceInfo(anyString())).thenReturn(10.00);
 
@@ -117,13 +116,11 @@ class ValuationBusinessImplTest {
         when(mockUrl.openConnection()).thenReturn(urlConnection);
         when(urlConnection.getInputStream()).thenReturn(targetStream);
         when(valuationInfoRepository.save(any(ValuationInfo.class))).thenReturn(null);
-        when(valuationInfoRepository.findAllByTicker(anyString())).thenReturn(Optional.of(valuationInfo1));
+        when(valuationInfoRepository.findAllByTicker(anyString())).thenReturn(Optional.empty());
 
         List<ResponseData> responseDataList = valuationBusiness.business(industry);
         Assertions.assertNotNull(responseDataList.get(0));
 
     }
-
-
 
 }
