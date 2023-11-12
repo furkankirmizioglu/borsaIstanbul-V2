@@ -78,7 +78,7 @@ public class StockScoreImpl implements StockScore {
         }
     }
 
-    public void scoring(List<ResponseData> resultList) {
+    public List<ResponseData> scoring(List<ResponseData> resultList) {
 
         pegScore(resultList);
         pbScore(resultList);
@@ -109,6 +109,7 @@ public class StockScoreImpl implements StockScore {
                 x.setSuggestion("Güçlü Sat");
             }
         }
+        return resultList;
     }
 
 }

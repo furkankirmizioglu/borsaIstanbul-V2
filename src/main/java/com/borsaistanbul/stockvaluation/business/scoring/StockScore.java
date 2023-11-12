@@ -5,5 +5,5 @@ import com.borsaistanbul.stockvaluation.dto.model.ResponseData;
 import java.util.List;
 
 public interface StockScore {
-    void scoring(List<ResponseData> resultList);
+    List<ResponseData> scoring(List<ResponseData> resultList);
 }

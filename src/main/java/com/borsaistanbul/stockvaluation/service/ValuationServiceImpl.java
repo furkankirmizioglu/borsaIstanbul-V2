@@ -11,11 +11,10 @@ import java.util.List;
 @Service
 public class ValuationServiceImpl implements ValuationService {
 
-    @Autowired
     private final ValuationBusiness valuationBusiness;
-    @Autowired
     private final StockScore stockScore;
 
+    @Autowired
     public ValuationServiceImpl(ValuationBusiness valuationBusiness, StockScore stockScore) {
         this.valuationBusiness = valuationBusiness;
         this.stockScore = stockScore;
@@ -26,8 +25,7 @@ public class ValuationServiceImpl implements ValuationService {
 
         List<ResponseData> responseDataList = valuationBusiness.business(industry);
 
-        // Sort the valuationResultList by finalScore and send response to UI.
-        stockScore.scoring(responseDataList);
+        responseDataList = stockScore.scoring(responseDataList);
         return responseDataList;
     }
 }
