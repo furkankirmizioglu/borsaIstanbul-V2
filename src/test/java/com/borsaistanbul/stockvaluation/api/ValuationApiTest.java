@@ -23,6 +23,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class ValuationApiTest {
 
+    private static final String TEST = "TEST";
+    private static final double defaultDouble = 10.0;
+
     @Autowired
     MockMvc mockMvc;
 
@@ -34,7 +37,24 @@ class ValuationApiTest {
 
     @BeforeEach
     void init() {
-        responseDataList = mock(ArrayList.class);
+
+        responseDataList = new ArrayList<>();
+
+        responseDataList.add(ResponseData.builder()
+                .ticker(TEST)
+                .companyName(TEST)
+                .latestBalanceSheetTerm(TEST)
+                .price(defaultDouble)
+                .pe(defaultDouble)
+                .pb(defaultDouble)
+                .peg(defaultDouble)
+                .ebitdaMargin(defaultDouble)
+                .netProfitMargin(defaultDouble)
+                .netDebtToEbitda(defaultDouble)
+                .leverageRatio(defaultDouble)
+                .finalScore(defaultDouble)
+                .suggestion(TEST)
+                .build());
 
     }
 

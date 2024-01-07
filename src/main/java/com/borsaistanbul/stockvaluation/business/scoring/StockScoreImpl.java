@@ -1,6 +1,7 @@
 package com.borsaistanbul.stockvaluation.business.scoring;
 
 import com.borsaistanbul.stockvaluation.dto.model.ResponseData;
+import com.borsaistanbul.stockvaluation.utils.Constants;
 import org.apache.commons.math3.util.Precision;
 import org.springframework.stereotype.Service;
 import java.util.Comparator;
@@ -78,6 +79,29 @@ public class StockScoreImpl implements StockScore {
         }
     }
 
+    // Scoring based on RSI sort by lowest to highest.
+    public void rsiScore(List<ResponseData> resultList) {
+        int scoreCounter = resultList.size();
+        resultList.sort(Comparator.comparing(ResponseData::getRsi));
+        for (ResponseData x : resultList) {
+            if (x.getRsi() > 0) {
+                x.setFinalScore(x.getFinalScore() + scoreCounter);
+                scoreCounter--;
+            }
+        }
+    }
+
+    // Scoring based on trend forecast calculated with polynomial regression.
+    public void forecastScore(List<ResponseData> resultList) {
+        int scoreCounter = resultList.size();
+        resultList.sort(Comparator.comparing(ResponseData::getForecast).reversed());
+        for (ResponseData x : resultList) {
+            x.setFinalScore(x.getFinalScore() + scoreCounter);
+            scoreCounter--;
+        }
+    }
+
+
     public List<ResponseData> scoring(List<ResponseData> resultList) {
 
         pegScore(resultList);
@@ -86,6 +110,11 @@ public class StockScoreImpl implements StockScore {
         netProfitMarginScore(resultList);
         netDebtToEbitdaScore(resultList);
         leverageRatioScore(resultList);
+        // Due to insufficient historical price information for recent IPO stocks,
+        // RSI scoring is disabled and won't be added to scoring calculations.
+
+        // I need to analysis polynomial regression concept.
+
 
         // Total score will divide to count of companies multiply by indicators (6) count and index to 100.
         resultList.sort(Comparator.comparing(ResponseData::getFinalScore));
@@ -98,15 +127,15 @@ public class StockScoreImpl implements StockScore {
         resultList.sort(Comparator.comparing(ResponseData::getFinalScore).reversed());
         for (ResponseData x : resultList) {
             if (x.getFinalScore() >= 85) {
-                x.setSuggestion("Güçlü Al");
+                x.setSuggestion(Constants.STRONG_BUY);
             } else if (x.getFinalScore() >= 70) {
-                x.setSuggestion("Al");
+                x.setSuggestion(Constants.BUY);
             } else if (x.getFinalScore() >= 55) {
-                x.setSuggestion("Nötr");
+                x.setSuggestion(Constants.NEUTRAL);
             } else if (x.getFinalScore() >= 40) {
-                x.setSuggestion("Sat");
+                x.setSuggestion(Constants.SELL);
             } else {
-                x.setSuggestion("Güçlü Sat");
+                x.setSuggestion(Constants.STRONG_SELL);
             }
         }
         return resultList;
