@@ -14,16 +14,16 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class PriceInfoServiceTest {
+class TechnicalDataServiceTest {
 
-    PriceInfoService priceInfoService;
+    TechnicalDataService technicalDataService;
     @Mock
     RestTemplate restTemplate;
 
     @BeforeEach
     void init() {
         restTemplate = mock(RestTemplate.class);
-        priceInfoService = new PriceInfoServiceImpl();
+        technicalDataService = new TechnicalDataServiceImpl();
     }
 
     @Test
@@ -32,7 +32,7 @@ class PriceInfoServiceTest {
         when(restTemplate.postForEntity(any(String.class), any(HttpEntity.class), any()))
                 .thenReturn(new ResponseEntity<>("{\"price\": 150.0}", HttpStatus.OK));
 
-        Assertions.assertThrows(StockValuationApiException.class, () -> priceInfoService.fetchPriceInfo("TEST"));
+        Assertions.assertThrows(StockValuationApiException.class, () -> technicalDataService.fetchTechnicalData("TEST"));
 
     }
 }

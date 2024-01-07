@@ -22,9 +22,7 @@ public class ValuationServiceImpl implements ValuationService {
 
     @Override
     public List<ResponseData> valuation(String industry) {
-
         List<ResponseData> responseDataList = valuationBusiness.business(industry);
-
         responseDataList = stockScore.scoring(responseDataList);
         return responseDataList;
     }

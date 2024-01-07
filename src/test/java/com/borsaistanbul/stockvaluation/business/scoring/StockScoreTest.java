@@ -23,7 +23,6 @@ class StockScoreTest {
         String ticker = TEST;
         String companyName = TEST;
         String latestBalanceSheetTerm = TEST;
-        double price = defaultDouble;
         double pe = defaultDouble;
         double netDebtToEbitda = defaultDouble;
         double leverageRatio = defaultDouble;
@@ -34,7 +33,7 @@ class StockScoreTest {
                 .ticker(ticker)
                 .companyName(companyName)
                 .latestBalanceSheetTerm(latestBalanceSheetTerm)
-                .price(price)
+                .price(defaultDouble)
                 .pe(pe)
                 .pb(defaultDouble)
                 .peg(defaultDouble)
@@ -42,6 +41,8 @@ class StockScoreTest {
                 .netProfitMargin(defaultDouble)
                 .netDebtToEbitda(netDebtToEbitda)
                 .leverageRatio(leverageRatio)
+                .rsi(defaultDouble)
+                .forecast(defaultDouble)
                 .finalScore(finalScore)
                 .suggestion(suggestion)
                 .build();
@@ -50,7 +51,7 @@ class StockScoreTest {
                 .ticker(ticker)
                 .companyName(companyName)
                 .latestBalanceSheetTerm(latestBalanceSheetTerm)
-                .price(price)
+                .price(defaultDouble)
                 .pe(pe)
                 .pb(0)
                 .peg(0)
@@ -58,6 +59,8 @@ class StockScoreTest {
                 .netProfitMargin(Double.POSITIVE_INFINITY)
                 .netDebtToEbitda(netDebtToEbitda)
                 .leverageRatio(leverageRatio)
+                .rsi(defaultDouble)
+                .forecast(defaultDouble)
                 .finalScore(finalScore)
                 .suggestion(suggestion)
                 .build();
@@ -66,7 +69,7 @@ class StockScoreTest {
                 .ticker(ticker)
                 .companyName(companyName)
                 .latestBalanceSheetTerm(latestBalanceSheetTerm)
-                .price(price)
+                .price(defaultDouble)
                 .pe(pe)
                 .pb(0)
                 .peg(0)
@@ -74,6 +77,8 @@ class StockScoreTest {
                 .netProfitMargin(Double.NEGATIVE_INFINITY)
                 .netDebtToEbitda(netDebtToEbitda)
                 .leverageRatio(leverageRatio)
+                .rsi(defaultDouble)
+                .forecast(defaultDouble)
                 .finalScore(finalScore)
                 .suggestion(suggestion)
                 .build();

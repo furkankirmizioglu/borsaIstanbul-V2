@@ -1,6 +1,6 @@
 package com.borsaistanbul.stockvaluation.business.valuation;
 
-import com.borsaistanbul.stockvaluation.client.PriceInfoService;
+import com.borsaistanbul.stockvaluation.client.TechnicalDataService;
 import com.borsaistanbul.stockvaluation.dto.entity.ValuationInfo;
 import com.borsaistanbul.stockvaluation.dto.model.ResponseData;
 import com.borsaistanbul.stockvaluation.repository.CompanyInfoRepository;
@@ -21,6 +21,7 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,10 +37,10 @@ class ValuationBusinessImplTest {
     @Autowired
     ValuationInfoRepository valuationInfoRepository;
     @Autowired
-    PriceInfoService priceInfoService;
+    TechnicalDataService technicalDataService;
     ValuationBusinessImpl valuationBusiness;
     String industry;
-    final List<String> tickerList = new ArrayList<>();
+    List<String> tickerList;
     ValuationInfo valuationInfo1;
     @Mock
     URI mockUri;
@@ -50,22 +51,28 @@ class ValuationBusinessImplTest {
     @Mock
     InputStream targetStream;
 
+    HashMap<String, Double> priceInfoHashMap;
+
     @BeforeEach
     void init() {
         companyInfoRepository = mock(CompanyInfoRepository.class);
         valuationInfoRepository = mock(ValuationInfoRepository.class);
-        priceInfoService = mock(PriceInfoService.class);
+        technicalDataService = mock(TechnicalDataService.class);
         resourceUtils = mock(ResourceUtils.class);
         urlConnection = mock(URLConnection.class);
         mockUri = mock(URI.class);
         mockUrl = mock(URL.class);
-
         targetStream = mock(InputStream.class);
 
 
-        valuationBusiness = new ValuationBusinessImpl(companyInfoRepository, valuationInfoRepository, priceInfoService);
+        valuationBusiness = new ValuationBusinessImpl(companyInfoRepository, valuationInfoRepository, technicalDataService);
         industry = "Otomotiv";
 
+        priceInfoHashMap = new HashMap<>();
+        priceInfoHashMap.put("price", 100.0);
+        priceInfoHashMap.put("rsi", 25.0);
+
+        tickerList = new ArrayList<>();
         tickerList.add("FROTO");
 
         valuationInfo1 = new ValuationInfo();
@@ -92,7 +99,7 @@ class ValuationBusinessImplTest {
         when(companyInfoRepository.findTickerByIndustry(anyString())).thenReturn(tickerList);
         when(valuationInfoRepository.findAllByTicker(anyString())).thenReturn(Optional.of(valuationInfo1));
         when(companyInfoRepository.findCompanyNameByTicker(anyString())).thenReturn("TEST_COMPANY");
-        when(priceInfoService.fetchPriceInfo(anyString())).thenReturn(10.00);
+        when(technicalDataService.fetchTechnicalData(anyString())).thenReturn(priceInfoHashMap);
 
 
         List<ResponseData> responseDataList = valuationBusiness.business(industry);
@@ -107,7 +114,7 @@ class ValuationBusinessImplTest {
 
         when(companyInfoRepository.findTickerByIndustry(anyString())).thenReturn(tickerList);
         when(companyInfoRepository.findCompanyNameByTicker(anyString())).thenReturn("TEST_COMPANY");
-        when(priceInfoService.fetchPriceInfo(anyString())).thenReturn(10.00);
+        when(technicalDataService.fetchTechnicalData(anyString())).thenReturn(priceInfoHashMap);
 
         File initialFile = new File("src/main/resources/static/unittestreport.xlsx");
         InputStream targetStream = new FileInputStream(initialFile);
