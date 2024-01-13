@@ -42,7 +42,6 @@ class StockScoreTest {
                 .netDebtToEbitda(netDebtToEbitda)
                 .leverageRatio(leverageRatio)
                 .rsi(defaultDouble)
-                .forecast(defaultDouble)
                 .finalScore(finalScore)
                 .suggestion(suggestion)
                 .build();
@@ -60,7 +59,6 @@ class StockScoreTest {
                 .netDebtToEbitda(netDebtToEbitda)
                 .leverageRatio(leverageRatio)
                 .rsi(defaultDouble)
-                .forecast(defaultDouble)
                 .finalScore(finalScore)
                 .suggestion(suggestion)
                 .build();
@@ -78,7 +76,6 @@ class StockScoreTest {
                 .netDebtToEbitda(netDebtToEbitda)
                 .leverageRatio(leverageRatio)
                 .rsi(defaultDouble)
-                .forecast(defaultDouble)
                 .finalScore(finalScore)
                 .suggestion(suggestion)
                 .build();

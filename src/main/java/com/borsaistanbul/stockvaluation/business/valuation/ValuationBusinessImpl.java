@@ -88,7 +88,6 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                             .netProfitMargin(CalculateTools.netProfitMargin(valuationInfo))
                             .leverageRatio(CalculateTools.leverageRatio(valuationInfo))
                             .rsi(priceHashMap.get("rsi"))
-                            .forecast(priceHashMap.get("forecast"))
                             .build()));
 
             log.info("{} için değerleme işlemi tamamlandı...", ticker);

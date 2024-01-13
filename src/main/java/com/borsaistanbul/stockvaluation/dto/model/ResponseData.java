@@ -20,7 +20,6 @@ public class ResponseData {
     private double netDebtToEbitda;
     private double leverageRatio;
     private double rsi;
-    private double forecast;
     private double finalScore;
     private String suggestion;
 }
