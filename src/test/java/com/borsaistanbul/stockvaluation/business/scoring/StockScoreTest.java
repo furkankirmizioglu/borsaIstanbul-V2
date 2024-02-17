@@ -41,7 +41,6 @@ class StockScoreTest {
                 .netProfitMargin(defaultDouble)
                 .netDebtToEbitda(netDebtToEbitda)
                 .leverageRatio(leverageRatio)
-                .rsi(defaultDouble)
                 .finalScore(finalScore)
                 .suggestion(suggestion)
                 .build();
@@ -58,7 +57,6 @@ class StockScoreTest {
                 .netProfitMargin(Double.POSITIVE_INFINITY)
                 .netDebtToEbitda(netDebtToEbitda)
                 .leverageRatio(leverageRatio)
-                .rsi(defaultDouble)
                 .finalScore(finalScore)
                 .suggestion(suggestion)
                 .build();
@@ -75,7 +73,6 @@ class StockScoreTest {
                 .netProfitMargin(Double.NEGATIVE_INFINITY)
                 .netDebtToEbitda(netDebtToEbitda)
                 .leverageRatio(leverageRatio)
-                .rsi(defaultDouble)
                 .finalScore(finalScore)
                 .suggestion(suggestion)
                 .build();

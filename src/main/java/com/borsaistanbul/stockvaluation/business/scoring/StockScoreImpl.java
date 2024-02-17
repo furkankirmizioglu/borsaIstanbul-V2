@@ -79,18 +79,6 @@ public class StockScoreImpl implements StockScore {
         }
     }
 
-    // Scoring based on RSI sort by lowest to highest.
-    public void rsiScore(List<ResponseData> resultList) {
-        int scoreCounter = resultList.size();
-        resultList.sort(Comparator.comparing(ResponseData::getRsi));
-        for (ResponseData x : resultList) {
-            if (x.getRsi() > 0) {
-                x.setFinalScore(x.getFinalScore() + scoreCounter);
-                scoreCounter--;
-            }
-        }
-    }
-
     public List<ResponseData> scoring(List<ResponseData> resultList) {
 
         pegScore(resultList);
@@ -99,10 +87,11 @@ public class StockScoreImpl implements StockScore {
         netProfitMarginScore(resultList);
         netDebtToEbitdaScore(resultList);
         leverageRatioScore(resultList);
+
         // Due to insufficient historical price information for recent IPO stocks,
         // RSI scoring is disabled and won't be added to scoring calculations.
+        // Total score will divide to count of companies multiply by indicators (6) count and index to 100.
 
-        // Total score will divide to count of companies multiply by indicators (7) count and index to 100.
         resultList.sort(Comparator.comparing(ResponseData::getFinalScore));
         for (ResponseData x : resultList) {
             double score = Precision.round(x.getFinalScore() / (resultList.size() * 6) * 100, 0);

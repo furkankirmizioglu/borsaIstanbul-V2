@@ -9,17 +9,12 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.ResourceUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.math.BigDecimal;
-import java.net.URI;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,12 +23,10 @@ import java.util.Optional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class ValuationBusinessImplTest {
-
     @Mock
-    ResourceUtils resourceUtils;
-    @Mock
-    CompanyInfoRepository companyInfoRepository;
+    private CompanyInfoRepository companyInfoRepository;
     @Autowired
     ValuationInfoRepository valuationInfoRepository;
     @Autowired
@@ -42,14 +35,6 @@ class ValuationBusinessImplTest {
     String industry;
     List<String> tickerList;
     ValuationInfo valuationInfo1;
-    @Mock
-    URI mockUri;
-    @Mock
-    URL mockUrl;
-    @Mock
-    URLConnection urlConnection;
-    @Mock
-    InputStream targetStream;
 
     HashMap<String, Double> priceInfoHashMap;
 
@@ -58,12 +43,6 @@ class ValuationBusinessImplTest {
         companyInfoRepository = mock(CompanyInfoRepository.class);
         valuationInfoRepository = mock(ValuationInfoRepository.class);
         technicalDataService = mock(TechnicalDataService.class);
-        resourceUtils = mock(ResourceUtils.class);
-        urlConnection = mock(URLConnection.class);
-        mockUri = mock(URI.class);
-        mockUrl = mock(URL.class);
-        targetStream = mock(InputStream.class);
-
 
         valuationBusiness = new ValuationBusinessImpl(companyInfoRepository, valuationInfoRepository, technicalDataService);
         industry = "Otomotiv";
@@ -101,7 +80,6 @@ class ValuationBusinessImplTest {
         when(companyInfoRepository.findCompanyNameByTicker(anyString())).thenReturn("TEST_COMPANY");
         when(technicalDataService.fetchTechnicalData(anyString())).thenReturn(priceInfoHashMap);
 
-
         List<ResponseData> responseDataList = valuationBusiness.business(industry);
 
         Assertions.assertNotNull(responseDataList.get(0));
@@ -116,12 +94,7 @@ class ValuationBusinessImplTest {
         when(companyInfoRepository.findCompanyNameByTicker(anyString())).thenReturn("TEST_COMPANY");
         when(technicalDataService.fetchTechnicalData(anyString())).thenReturn(priceInfoHashMap);
 
-        File initialFile = new File("src/main/resources/static/unittestreport.xlsx");
-        InputStream targetStream = new FileInputStream(initialFile);
-
         // TODO -> You have to mock the URL so it shouldn't go to FinTables actually.
-        when(mockUrl.openConnection()).thenReturn(urlConnection);
-        when(urlConnection.getInputStream()).thenReturn(targetStream);
         when(valuationInfoRepository.save(any(ValuationInfo.class))).thenReturn(null);
         when(valuationInfoRepository.findAllByTicker(anyString())).thenReturn(Optional.empty());
 
