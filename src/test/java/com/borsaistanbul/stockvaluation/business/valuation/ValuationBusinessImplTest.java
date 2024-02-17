@@ -25,6 +25,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ValuationBusinessImplTest {
+
     @Mock
     private CompanyInfoRepository companyInfoRepository;
     @Autowired
@@ -35,7 +36,6 @@ class ValuationBusinessImplTest {
     String industry;
     List<String> tickerList;
     ValuationInfo valuationInfo1;
-
     HashMap<String, Double> priceInfoHashMap;
 
     @BeforeEach
@@ -49,7 +49,6 @@ class ValuationBusinessImplTest {
 
         priceInfoHashMap = new HashMap<>();
         priceInfoHashMap.put("price", 100.0);
-        priceInfoHashMap.put("rsi", 25.0);
 
         tickerList = new ArrayList<>();
         tickerList.add("FROTO");
