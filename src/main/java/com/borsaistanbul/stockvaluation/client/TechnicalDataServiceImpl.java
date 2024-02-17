@@ -33,7 +33,6 @@ public class TechnicalDataServiceImpl implements TechnicalDataService {
 
             HashMap<String, Double> priceInfo = new HashMap<>();
             priceInfo.put("price", Double.parseDouble(new JSONObject(responseEntity.getBody()).get("price").toString()));
-            priceInfo.put("rsi", Double.parseDouble(new JSONObject(responseEntity.getBody()).get("rsi").toString()));
 
             return priceInfo;
         } catch (ResourceAccessException ex) {
