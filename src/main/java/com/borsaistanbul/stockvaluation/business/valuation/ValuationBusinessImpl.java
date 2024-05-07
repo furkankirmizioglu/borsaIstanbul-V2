@@ -87,6 +87,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                             .netDebtToEbitda(CalculateTools.netDebtToEbitda(valuationInfo))
                             .netProfitMargin(CalculateTools.netProfitMargin(valuationInfo))
                             .leverageRatio(CalculateTools.leverageRatio(valuationInfo))
+                            .finalScore(0)
                             .build()));
 
             log.info("{} için değerleme işlemi tamamlandı...", ticker);

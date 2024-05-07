@@ -12,17 +12,15 @@ import java.math.BigDecimal;
 public class CalculateTools {
 
     public static double priceToEarnings(double closePrice, ValuationInfo info) {
-        double currentEPS = Precision.round(info.getTtmNetProfit().doubleValue() / info.getInitialCapital().doubleValue(), 2);
-        return Precision.round(closePrice / currentEPS, 2);
+        double currentEPS = info.getTtmNetProfit().doubleValue() / info.getInitialCapital().doubleValue();
+        double pe = Precision.round(closePrice / currentEPS, 2);
+        return pe > 0 ? pe : Double.NaN;
     }
 
     public static double priceToEarningsGrowth(double closePrice, ValuationInfo info) {
-        double currentEPS = Precision.round(info.getTtmNetProfit().doubleValue() / info.getInitialCapital().doubleValue(), 2);
-        double previousEPS = Precision.round(info.getPrevTtmNetProfit().doubleValue() / info.getInitialCapital().doubleValue(), 2);
-        double epsGrowthRate = Precision.round((currentEPS / previousEPS - 1) * 100, 2);
-        double pe = Precision.round(closePrice / currentEPS, 2);
-        double priceToEarningsGrowth = Precision.round(pe / epsGrowthRate, 2);
-        return (priceToEarningsGrowth) > 0 ? priceToEarningsGrowth : 0;
+        double epsGrowthRate = (info.getTtmNetProfit().doubleValue() - info.getPrevTtmNetProfit().doubleValue()) / info.getPrevTtmNetProfit().doubleValue() * 100;
+        double pe = priceToEarnings(closePrice, info);
+        return (pe > 0 && epsGrowthRate > 0) ? Precision.round(pe / epsGrowthRate, 4) : Double.NaN;
     }
 
     public static double priceToBookRatio(double closePrice, ValuationInfo info) {
@@ -63,6 +61,4 @@ public class CalculateTools {
                 .subtract(values.getCashAndEquivalents())
                 .subtract(values.getFinancialInvestments());
     }
-
-
 }
