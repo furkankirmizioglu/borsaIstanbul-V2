@@ -28,11 +28,13 @@ public class CalculateTools {
     }
 
     public static double netProfitMargin(ValuationInfo info) {
-        return Precision.round(info.getTtmNetProfit().doubleValue() / info.getAnnualSales().doubleValue() * 100, 2);
+        double netProfitMargin = Precision.round(info.getTtmNetProfit().doubleValue() / info.getAnnualSales().doubleValue() * 100, 2);
+        return (netProfitMargin != Double.NEGATIVE_INFINITY && netProfitMargin != Double.POSITIVE_INFINITY) ? netProfitMargin : Double.NaN;
     }
 
     public static double ebitdaMargin(ValuationInfo info) {
-        return Precision.round(info.getAnnualEbitda().doubleValue() / (info.getAnnualSales()).doubleValue() * 100, 2);
+        double ebitdaMargin = Precision.round(info.getAnnualEbitda().doubleValue() / (info.getAnnualSales()).doubleValue() * 100, 2);
+        return (ebitdaMargin != Double.NEGATIVE_INFINITY && ebitdaMargin != Double.POSITIVE_INFINITY) ? ebitdaMargin : Double.NaN;
     }
 
     public static double leverageRatio(ValuationInfo info) {

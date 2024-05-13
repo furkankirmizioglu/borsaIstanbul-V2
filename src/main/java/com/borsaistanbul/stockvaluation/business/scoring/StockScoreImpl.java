@@ -35,7 +35,7 @@ public class StockScoreImpl implements StockScore {
     public void ebitdaMarginScore(List<ResponseData> resultList) {
         resultList.sort(Comparator.comparing(ResponseData::getEbitdaMargin).reversed());
         resultList.forEach(x -> {
-            if (x.getEbitdaMargin() != Double.POSITIVE_INFINITY && x.getEbitdaMargin() != Double.NEGATIVE_INFINITY) {
+            if (!Double.isNaN(x.getEbitdaMargin())) {
                 x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x)));
             }
         });
@@ -45,7 +45,7 @@ public class StockScoreImpl implements StockScore {
     public void netProfitMarginScore(List<ResponseData> resultList) {
         resultList.sort(Comparator.comparing(ResponseData::getNetProfitMargin).reversed());
         resultList.forEach(x -> {
-            if (x.getNetProfitMargin() != Double.POSITIVE_INFINITY && x.getNetProfitMargin() != Double.NEGATIVE_INFINITY) {
+            if (!Double.isNaN(x.getNetProfitMargin())) {
                 x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x)));
             }
         });

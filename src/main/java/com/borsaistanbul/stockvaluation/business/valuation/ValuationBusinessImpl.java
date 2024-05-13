@@ -78,7 +78,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                     ResponseData.builder()
                             .price(price)
                             .companyName(companyName)
-                            .ticker(valuationInfo.getTicker())
+                            .ticker(ticker)
                             .latestBalanceSheetTerm(valuationInfo.getBalanceSheetTerm())
                             .pb(CalculateTools.priceToBookRatio(price, valuationInfo))
                             .pe(CalculateTools.priceToEarnings(price, valuationInfo))
