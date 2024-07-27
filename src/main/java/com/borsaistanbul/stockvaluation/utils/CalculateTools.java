@@ -12,13 +12,13 @@ import java.math.BigDecimal;
 public class CalculateTools {
 
     public static double priceToEarnings(double closePrice, ValuationInfo info) {
-        double currentEPS = info.getTtmNetProfit().doubleValue() / info.getInitialCapital().doubleValue();
+        double currentEPS = info.getAnnualNetProfit().doubleValue() / info.getInitialCapital().doubleValue();
         double pe = Precision.round(closePrice / currentEPS, 2);
         return pe > 0 ? pe : Double.NaN;
     }
 
     public static double priceToEarningsGrowth(double closePrice, ValuationInfo info) {
-        double epsGrowthRate = (info.getTtmNetProfit().doubleValue() - info.getPrevTtmNetProfit().doubleValue()) / info.getPrevTtmNetProfit().doubleValue() * 100;
+        double epsGrowthRate = (info.getAnnualNetProfit().doubleValue() - info.getPrevYearNetProfit().doubleValue()) / info.getPrevYearNetProfit().doubleValue() * 100;
         double pe = priceToEarnings(closePrice, info);
         return (pe > 0 && epsGrowthRate > 0) ? Precision.round(pe / epsGrowthRate, 4) : Double.NaN;
     }
@@ -28,7 +28,7 @@ public class CalculateTools {
     }
 
     public static double netProfitMargin(ValuationInfo info) {
-        double netProfitMargin = Precision.round(info.getTtmNetProfit().doubleValue() / info.getAnnualSales().doubleValue() * 100, 2);
+        double netProfitMargin = Precision.round(info.getAnnualNetProfit().doubleValue() / info.getAnnualSales().doubleValue() * 100, 2);
         return (netProfitMargin != Double.NEGATIVE_INFINITY && netProfitMargin != Double.POSITIVE_INFINITY) ? netProfitMargin : Double.NaN;
     }
 
@@ -50,8 +50,16 @@ public class CalculateTools {
         return Precision.round(valuationInfo.getNetDebt().doubleValue() / valuationInfo.getAnnualEbitda().doubleValue(), 2);
     }
 
+    public static double marketValueToEbitda(double closePrice, ValuationInfo valuationInfo) {
+
+        double marketValue = valuationInfo.getInitialCapital().doubleValue() * closePrice;
+        double actualOperationProfit = valuationInfo.getAnnualEbitda().doubleValue();
+        return Precision.round(marketValue / actualOperationProfit, 2);
+
+    }
+
     public static BigDecimal ebitda(FinancialValues values) {
-        return values.getGrossProfit()
+        return values.getAnnualGrossProfit()
                 .add(values.getAdministrativeExpenses())
                 .add(values.getMarketingSalesDistributionExpenses())
                 .add(values.getResearchDevelopmentExpenses())

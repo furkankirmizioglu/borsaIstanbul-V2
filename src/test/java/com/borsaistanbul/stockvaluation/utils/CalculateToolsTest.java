@@ -25,8 +25,8 @@ class CalculateToolsTest {
         valuationInfo.setInitialCapital(BigDecimal.TEN);
         valuationInfo.setAnnualEbitda(BigDecimal.TEN);
         valuationInfo.setAnnualSales(BigDecimal.TEN);
-        valuationInfo.setTtmNetProfit(BigDecimal.TEN);
-        valuationInfo.setPrevTtmNetProfit(new BigDecimal(5));
+        valuationInfo.setAnnualNetProfit(BigDecimal.TEN);
+        valuationInfo.setPrevYearNetProfit(new BigDecimal(5));
         valuationInfo.setNetDebt(BigDecimal.TEN);
         valuationInfo.setTotalAssets(BigDecimal.TEN);
         valuationInfo.setLongTermLiabilities(BigDecimal.TEN);
@@ -40,7 +40,7 @@ class CalculateToolsTest {
         financialValues.setTotalFinancialLiabilities(new BigDecimal(100));
         financialValues.setCashAndEquivalents(BigDecimal.TEN);
         financialValues.setFinancialInvestments(BigDecimal.TEN);
-        financialValues.setGrossProfit(BigDecimal.TEN);
+        financialValues.setAnnualGrossProfit(BigDecimal.TEN);
     }
 
     @Test

@@ -21,8 +21,8 @@ class ValuationInfoTest {
         valuationInfo.setInitialCapital(BigDecimal.TEN);
         valuationInfo.setAnnualEbitda(BigDecimal.TEN);
         valuationInfo.setAnnualSales(BigDecimal.TEN);
-        valuationInfo.setTtmNetProfit(BigDecimal.TEN);
-        valuationInfo.setPrevTtmNetProfit(new BigDecimal(5));
+        valuationInfo.setAnnualNetProfit(BigDecimal.TEN);
+        valuationInfo.setPrevYearNetProfit(new BigDecimal(5));
         valuationInfo.setNetDebt(BigDecimal.TEN);
         valuationInfo.setTotalAssets(BigDecimal.TEN);
         valuationInfo.setLongTermLiabilities(BigDecimal.TEN);
@@ -40,8 +40,8 @@ class ValuationInfoTest {
         Assertions.assertEquals(BigDecimal.TEN, valuationInfo.getInitialCapital());
         Assertions.assertEquals(BigDecimal.TEN, valuationInfo.getAnnualEbitda());
         Assertions.assertEquals(BigDecimal.TEN, valuationInfo.getAnnualSales());
-        Assertions.assertEquals(BigDecimal.TEN, valuationInfo.getTtmNetProfit());
-        Assertions.assertEquals(new BigDecimal(5), valuationInfo.getPrevTtmNetProfit());
+        Assertions.assertEquals(BigDecimal.TEN, valuationInfo.getAnnualNetProfit());
+        Assertions.assertEquals(new BigDecimal(5), valuationInfo.getPrevYearNetProfit());
         Assertions.assertEquals(BigDecimal.TEN, valuationInfo.getNetDebt());
         Assertions.assertEquals(BigDecimal.TEN, valuationInfo.getTotalAssets());
         Assertions.assertEquals(BigDecimal.TEN, valuationInfo.getLongTermLiabilities());
