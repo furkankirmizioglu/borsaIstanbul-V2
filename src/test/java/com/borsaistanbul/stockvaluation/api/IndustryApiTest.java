@@ -41,7 +41,6 @@ class IndustryApiTest {
     @Test
     @SneakyThrows
     void test() {
-
         when(companyService.listAll()).thenReturn(industriesList);
 
         mockMvc.perform(get("/industry/list")
@@ -52,5 +51,4 @@ class IndustryApiTest {
 
         verify(companyService, times(1)).listAll();
     }
-
 }

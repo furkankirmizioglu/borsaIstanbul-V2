@@ -14,11 +14,9 @@ public class ResponseData {
     private double price;
     private double pe;
     private double pb;
-    private double peg;
-    private double ebitdaMargin;
-    private double netProfitMargin;
+    private double enterpriseValueToEbitda;
     private double netDebtToEbitda;
-    private double leverageRatio;
+    private double debtToEquity;
     private double finalScore;
     private String suggestion;
 }

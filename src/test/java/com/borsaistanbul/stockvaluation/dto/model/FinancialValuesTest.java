@@ -17,7 +17,7 @@ class FinancialValuesTest {
         financialValues.setCashAndEquivalents(BigDecimal.TEN);
         financialValues.setFinancialInvestments(BigDecimal.TEN);
         financialValues.setTotalFinancialLiabilities(new BigDecimal(100));
-        financialValues.setGrossProfit(BigDecimal.TEN);
+        financialValues.setAnnualGrossProfit(BigDecimal.TEN);
         financialValues.setAdministrativeExpenses(BigDecimal.TEN);
         financialValues.setMarketingSalesDistributionExpenses(BigDecimal.TEN);
         financialValues.setResearchDevelopmentExpenses(BigDecimal.TEN);
@@ -28,8 +28,8 @@ class FinancialValuesTest {
         financialValues.setTotalShortTermLiabilities(BigDecimal.TEN);
         financialValues.setTotalLongTermLiabilities(BigDecimal.TEN);
         financialValues.setAnnualSales(BigDecimal.TEN);
-        financialValues.setTtmNetProfit(BigDecimal.TEN);
-        financialValues.setPrevTtmNetProfit(BigDecimal.TEN);
+        financialValues.setAnnualNetProfit(BigDecimal.TEN);
+        financialValues.setPrevYearNetProfit(BigDecimal.TEN);
     }
 
     @Test
@@ -37,7 +37,7 @@ class FinancialValuesTest {
         Assertions.assertEquals(BigDecimal.TEN, financialValues.getCashAndEquivalents());
         Assertions.assertEquals(BigDecimal.TEN, financialValues.getFinancialInvestments());
         Assertions.assertEquals(new BigDecimal(100), financialValues.getTotalFinancialLiabilities());
-        Assertions.assertEquals(BigDecimal.TEN, financialValues.getGrossProfit());
+        Assertions.assertEquals(BigDecimal.TEN, financialValues.getAnnualGrossProfit());
         Assertions.assertEquals(BigDecimal.TEN, financialValues.getAdministrativeExpenses());
         Assertions.assertEquals(BigDecimal.TEN, financialValues.getMarketingSalesDistributionExpenses());
         Assertions.assertEquals(BigDecimal.TEN, financialValues.getResearchDevelopmentExpenses());
@@ -48,8 +48,8 @@ class FinancialValuesTest {
         Assertions.assertEquals(BigDecimal.TEN, financialValues.getTotalShortTermLiabilities());
         Assertions.assertEquals(BigDecimal.TEN, financialValues.getTotalLongTermLiabilities());
         Assertions.assertEquals(BigDecimal.TEN, financialValues.getAnnualSales());
-        Assertions.assertEquals(BigDecimal.TEN, financialValues.getTtmNetProfit());
-        Assertions.assertEquals(BigDecimal.TEN, financialValues.getPrevTtmNetProfit());
+        Assertions.assertEquals(BigDecimal.TEN, financialValues.getAnnualNetProfit());
+        Assertions.assertEquals(BigDecimal.TEN, financialValues.getPrevYearNetProfit());
     }
 
 }

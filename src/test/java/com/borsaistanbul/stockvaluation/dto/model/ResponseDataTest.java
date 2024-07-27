@@ -12,49 +12,32 @@ class ResponseDataTest {
 
     @BeforeEach
     void init() {
-        String ticker = TEST;
-        String companyName = TEST;
-        String latestBalanceSheetTerm = TEST;
-        double price = defaultDouble;
-        double pe = defaultDouble;
-        double pb = defaultDouble;
-        double peg = defaultDouble;
-        double ebitdaMargin = defaultDouble;
-        double netProfitMargin = defaultDouble;
-        double netDebtToEbitda = defaultDouble;
-        double leverageRatio = defaultDouble;
-        double finalScore = defaultDouble;
-        String suggestion = TEST;
 
         responseData = ResponseData.builder()
-                .ticker(ticker)
-                .companyName(companyName)
-                .latestBalanceSheetTerm(latestBalanceSheetTerm)
-                .price(price)
-                .pe(pe)
-                .pb(pb)
-                .peg(peg)
-                .ebitdaMargin(ebitdaMargin)
-                .netProfitMargin(netProfitMargin)
-                .netDebtToEbitda(netDebtToEbitda)
-                .leverageRatio(leverageRatio)
-                .finalScore(finalScore)
-                .suggestion(suggestion)
+                .ticker(TEST)
+                .companyName(TEST)
+                .latestBalanceSheetTerm(TEST)
+                .price(defaultDouble)
+                .pe(defaultDouble)
+                .pb(defaultDouble)
+                .enterpriseValueToEbitda(defaultDouble)
+                .netDebtToEbitda(defaultDouble)
+                .debtToEquity(defaultDouble)
+                .finalScore(defaultDouble)
+                .suggestion(TEST)
                 .build();
 
-        responseData.setTicker(ticker);
-        responseData.setCompanyName(companyName);
-        responseData.setLatestBalanceSheetTerm(latestBalanceSheetTerm);
-        responseData.setPrice(price);
-        responseData.setPe(pe);
-        responseData.setPb(pb);
-        responseData.setPeg(peg);
-        responseData.setEbitdaMargin(ebitdaMargin);
-        responseData.setNetProfitMargin(netProfitMargin);
-        responseData.setNetDebtToEbitda(netDebtToEbitda);
-        responseData.setLeverageRatio(leverageRatio);
-        responseData.setFinalScore(finalScore);
-        responseData.setSuggestion(suggestion);
+        responseData.setTicker(TEST);
+        responseData.setCompanyName(TEST);
+        responseData.setLatestBalanceSheetTerm(TEST);
+        responseData.setPrice(defaultDouble);
+        responseData.setPe(defaultDouble);
+        responseData.setPb(defaultDouble);
+        responseData.setEnterpriseValueToEbitda(defaultDouble);
+        responseData.setNetDebtToEbitda(defaultDouble);
+        responseData.setDebtToEquity(defaultDouble);
+        responseData.setFinalScore(defaultDouble);
+        responseData.setSuggestion(TEST);
     }
 
     @Test
@@ -65,11 +48,9 @@ class ResponseDataTest {
         Assertions.assertEquals(defaultDouble, responseData.getPrice());
         Assertions.assertEquals(defaultDouble, responseData.getPe());
         Assertions.assertEquals(defaultDouble, responseData.getPb());
-        Assertions.assertEquals(defaultDouble, responseData.getPeg());
-        Assertions.assertEquals(defaultDouble, responseData.getEbitdaMargin());
-        Assertions.assertEquals(defaultDouble, responseData.getNetProfitMargin());
+        Assertions.assertEquals(defaultDouble, responseData.getEnterpriseValueToEbitda());
+        Assertions.assertEquals(defaultDouble, responseData.getDebtToEquity());
         Assertions.assertEquals(defaultDouble, responseData.getNetDebtToEbitda());
-        Assertions.assertEquals(defaultDouble, responseData.getLeverageRatio());
         Assertions.assertEquals(TEST, responseData.getSuggestion());
     }
 

@@ -10,6 +10,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
@@ -28,6 +29,7 @@ public class CompanyServiceImpl implements CompanyService {
     }
 
     @Override
+    @Cacheable("industryList")
     public List<String> listAll() {
 
         List<String> response = companyInfoRepository.fetchAllIndustries();
@@ -43,6 +45,7 @@ public class CompanyServiceImpl implements CompanyService {
         }
         return response;
     }
+
     private void readExcel() {
         try {
             List<CompanyInfo> toSaveList = new ArrayList<>();

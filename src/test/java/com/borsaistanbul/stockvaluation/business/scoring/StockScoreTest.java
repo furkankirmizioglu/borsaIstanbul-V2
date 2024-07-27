@@ -20,62 +20,46 @@ class StockScoreTest {
         stockScore = new StockScoreImpl();
         responseDataList = new ArrayList<>();
 
-        String ticker = TEST;
-        String companyName = TEST;
-        String latestBalanceSheetTerm = TEST;
-        double price = defaultDouble;
-        double pe = defaultDouble;
-        double netDebtToEbitda = defaultDouble;
-        double leverageRatio = defaultDouble;
-        double finalScore = defaultDouble;
-        String suggestion = TEST;
-
         ResponseData responseData1 = ResponseData.builder()
-                .ticker(ticker)
-                .companyName(companyName)
-                .latestBalanceSheetTerm(latestBalanceSheetTerm)
-                .price(price)
-                .pe(pe)
+                .ticker(TEST)
+                .companyName(TEST)
+                .latestBalanceSheetTerm(TEST)
+                .price(defaultDouble)
+                .pe(defaultDouble)
                 .pb(defaultDouble)
-                .peg(defaultDouble)
-                .ebitdaMargin(defaultDouble)
-                .netProfitMargin(defaultDouble)
-                .netDebtToEbitda(netDebtToEbitda)
-                .leverageRatio(leverageRatio)
-                .finalScore(finalScore)
-                .suggestion(suggestion)
+                .enterpriseValueToEbitda(defaultDouble)
+                .netDebtToEbitda(defaultDouble)
+                .debtToEquity(defaultDouble)
+                .finalScore(defaultDouble)
+                .suggestion(TEST)
                 .build();
 
         ResponseData responseData2 = ResponseData.builder()
-                .ticker(ticker)
-                .companyName(companyName)
-                .latestBalanceSheetTerm(latestBalanceSheetTerm)
-                .price(price)
-                .pe(pe)
-                .pb(0)
-                .peg(0)
-                .ebitdaMargin(Double.POSITIVE_INFINITY)
-                .netProfitMargin(Double.POSITIVE_INFINITY)
-                .netDebtToEbitda(netDebtToEbitda)
-                .leverageRatio(leverageRatio)
-                .finalScore(finalScore)
-                .suggestion(suggestion)
+                .ticker(TEST)
+                .companyName(TEST)
+                .latestBalanceSheetTerm(TEST)
+                .price(defaultDouble)
+                .pe(defaultDouble)
+                .pb(defaultDouble)
+                .enterpriseValueToEbitda(defaultDouble)
+                .netDebtToEbitda(defaultDouble)
+                .debtToEquity(defaultDouble)
+                .finalScore(defaultDouble)
+                .suggestion(TEST)
                 .build();
 
         ResponseData responseData3 = ResponseData.builder()
-                .ticker(ticker)
-                .companyName(companyName)
-                .latestBalanceSheetTerm(latestBalanceSheetTerm)
-                .price(price)
-                .pe(pe)
-                .pb(0)
-                .peg(0)
-                .ebitdaMargin(Double.NEGATIVE_INFINITY)
-                .netProfitMargin(Double.NEGATIVE_INFINITY)
-                .netDebtToEbitda(netDebtToEbitda)
-                .leverageRatio(leverageRatio)
-                .finalScore(finalScore)
-                .suggestion(suggestion)
+                .ticker(TEST)
+                .companyName(TEST)
+                .latestBalanceSheetTerm(TEST)
+                .price(defaultDouble)
+                .pe(defaultDouble)
+                .pb(defaultDouble)
+                .enterpriseValueToEbitda(defaultDouble)
+                .netDebtToEbitda(defaultDouble)
+                .debtToEquity(defaultDouble)
+                .finalScore(defaultDouble)
+                .suggestion(TEST)
                 .build();
 
         responseDataList.add(responseData1);

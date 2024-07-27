@@ -11,30 +11,24 @@ import java.math.BigDecimal;
 @UtilityClass
 public class CalculateTools {
 
-    public static double priceToEarnings(double closePrice, ValuationInfo info) {
-        double currentEPS = Precision.round(info.getTtmNetProfit().doubleValue() / info.getInitialCapital().doubleValue(), 2);
-        return Precision.round(closePrice / currentEPS, 2);
+    public static double priceToEarnings(double price, ValuationInfo info) {
+        double currentEPS = info.getAnnualNetProfit().doubleValue() / info.getInitialCapital().doubleValue();
+        double pe = Precision.round(price / currentEPS, 2);
+        return pe > 0 ? pe : Double.NaN;
     }
 
-    public static double priceToEarningsGrowth(double closePrice, ValuationInfo info) {
-        double currentEPS = Precision.round(info.getTtmNetProfit().doubleValue() / info.getInitialCapital().doubleValue(), 2);
-        double previousEPS = Precision.round(info.getPrevTtmNetProfit().doubleValue() / info.getInitialCapital().doubleValue(), 2);
-        double epsGrowthRate = Precision.round((currentEPS / previousEPS - 1) * 100, 2);
-        double pe = Precision.round(closePrice / currentEPS, 2);
-        double priceToEarningsGrowth = Precision.round(pe / epsGrowthRate, 2);
-        return (priceToEarningsGrowth) > 0 ? priceToEarningsGrowth : 0;
-    }
-
-    public static double priceToBookRatio(double closePrice, ValuationInfo info) {
-        return Precision.round(info.getInitialCapital().doubleValue() * closePrice / info.getEquity().doubleValue(), 2);
+    public static double priceToBookRatio(double price, ValuationInfo info) {
+        return Precision.round(info.getInitialCapital().doubleValue() * price / info.getEquity().doubleValue(), 2);
     }
 
     public static double netProfitMargin(ValuationInfo info) {
-        return Precision.round(info.getTtmNetProfit().doubleValue() / info.getAnnualSales().doubleValue() * 100, 2);
+        double netProfitMargin = Precision.round(info.getAnnualNetProfit().doubleValue() / info.getAnnualSales().doubleValue() * 100, 2);
+        return (netProfitMargin != Double.NEGATIVE_INFINITY && netProfitMargin != Double.POSITIVE_INFINITY) ? netProfitMargin : Double.NaN;
     }
 
     public static double ebitdaMargin(ValuationInfo info) {
-        return Precision.round(info.getAnnualEbitda().doubleValue() / (info.getAnnualSales()).doubleValue() * 100, 2);
+        double ebitdaMargin = Precision.round(info.getAnnualEbitda().doubleValue() / (info.getAnnualSales()).doubleValue() * 100, 2);
+        return (ebitdaMargin != Double.NEGATIVE_INFINITY && ebitdaMargin != Double.POSITIVE_INFINITY) ? ebitdaMargin : Double.NaN;
     }
 
     public static double leverageRatio(ValuationInfo info) {
@@ -50,8 +44,22 @@ public class CalculateTools {
         return Precision.round(valuationInfo.getNetDebt().doubleValue() / valuationInfo.getAnnualEbitda().doubleValue(), 2);
     }
 
+    public static double enterpriseValueToEbitda(double price, ValuationInfo valuationInfo) {
+        BigDecimal enterpriseValue = valuationInfo.getInitialCapital()
+                .multiply(BigDecimal.valueOf(price))
+                .add(valuationInfo.getNetDebt());
+
+        return Precision.round(enterpriseValue.doubleValue() / valuationInfo.getNetDebt().doubleValue(), 2);
+    }
+
+    public static double debtToEquity(ValuationInfo valuationInfo) {
+        return Precision.round(valuationInfo.getNetDebt().doubleValue() / valuationInfo.getEquity().doubleValue(), 2);
+    }
+
+    // =============== PARSING BALANCE SHEET UTILITY FUNCTIONS ==================
+
     public static BigDecimal ebitda(FinancialValues values) {
-        return values.getGrossProfit()
+        return values.getAnnualGrossProfit()
                 .add(values.getAdministrativeExpenses())
                 .add(values.getMarketingSalesDistributionExpenses())
                 .add(values.getResearchDevelopmentExpenses())
@@ -62,7 +70,6 @@ public class CalculateTools {
         return values.getTotalFinancialLiabilities()
                 .subtract(values.getCashAndEquivalents())
                 .subtract(values.getFinancialInvestments());
+
     }
-
-
 }
