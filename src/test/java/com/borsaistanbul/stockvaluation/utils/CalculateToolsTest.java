@@ -48,11 +48,7 @@ class CalculateToolsTest {
         double pe = CalculateTools.priceToEarnings(10.0, valuationInfo);
         Assertions.assertEquals(10, pe);
     }
-    @Test
-    void priceToEarningsGrowthTest() {
-        double peg = CalculateTools.priceToEarningsGrowth(10.0, valuationInfo);
-        Assertions.assertEquals(0.1, peg);
-    }
+
     @Test
     void netProfitMarginTest() {
         double result = CalculateTools.netProfitMargin(valuationInfo);

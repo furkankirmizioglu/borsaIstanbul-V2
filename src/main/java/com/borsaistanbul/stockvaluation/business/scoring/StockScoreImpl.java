@@ -11,17 +11,17 @@ import java.util.List;
 @Service
 public class StockScoreImpl implements StockScore {
 
-    // Scoring based on PEG ratio.
-    public void pegScore(List<ResponseData> resultList) {
-        resultList.sort(Comparator.comparing(ResponseData::getPeg));
+    // Scoring based on Price/Earnings ratio.
+    public void peScore(List<ResponseData> resultList) {
+        resultList.sort(Comparator.comparing(ResponseData::getPe));
         resultList.forEach(x -> {
-            if (x.getPeg() > 0) {
+            if (x.getPe() > 0) {
                 x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x)));
             }
         });
     }
 
-    // Scoring based on P/B ratio.
+    // Scoring based on Price/Book ratio.
     public void pbScore(List<ResponseData> resultList) {
         resultList.sort(Comparator.comparing(ResponseData::getPb));
         resultList.forEach(x -> {
@@ -31,48 +31,35 @@ public class StockScoreImpl implements StockScore {
         });
     }
 
-    // Scoring based on EBITDA Margin sort by highest to lowest.
-    public void ebitdaMarginScore(List<ResponseData> resultList) {
-        resultList.sort(Comparator.comparing(ResponseData::getEbitdaMargin).reversed());
-        resultList.forEach(x -> {
-            if (!Double.isNaN(x.getEbitdaMargin())) {
-                x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x)));
-            }
-        });
+    // Scoring based on Enterprise Value / EBITDA ratio.
+    public void enterpriseValueToEbitdaScore(List<ResponseData> resultList) {
+        resultList.sort(Comparator.comparing(ResponseData::getEnterpriseValueToEbitda));
+        resultList.forEach(x -> x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x))));
     }
 
-    // Scoring based on Net Profit Margin sort by highest to lowest.
-    public void netProfitMarginScore(List<ResponseData> resultList) {
-        resultList.sort(Comparator.comparing(ResponseData::getNetProfitMargin).reversed());
-        resultList.forEach(x -> {
-            if (!Double.isNaN(x.getNetProfitMargin())) {
-                x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x)));
-            }
-        });
-    }
-
-    // Scoring based on net debt to ebitda ratio.
+    // Scoring based on Net Debt / EBITDA ratio.
     public void netDebtToEbitdaScore(List<ResponseData> resultList) {
         resultList.sort(Comparator.comparing(ResponseData::getNetDebtToEbitda));
         resultList.forEach(x -> x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x))));
     }
 
-    public void leverageRatioScore(List<ResponseData> resultList) {
-        resultList.sort(Comparator.comparing(ResponseData::getLeverageRatio));
+    // Scoring based on Debt/Equity ratio.
+    public void debtToEquityScore(List<ResponseData> resultList) {
+        resultList.sort(Comparator.comparing(ResponseData::getDebtToEquity));
         resultList.forEach(x -> x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x))));
     }
 
     public List<ResponseData> scoring(List<ResponseData> resultList) {
-        pegScore(resultList);
+        peScore(resultList);
         pbScore(resultList);
-        ebitdaMarginScore(resultList);
-        netProfitMarginScore(resultList);
+        enterpriseValueToEbitdaScore(resultList);
         netDebtToEbitdaScore(resultList);
-        leverageRatioScore(resultList);
+        debtToEquityScore(resultList);
 
-        // Total score will divide to list size multiply by indicators (6) count and index to 100.
+        // Total score will divide to list size multiply by number of indicators (5) count and index to 100.
         resultList.forEach(x -> {
-            x.setFinalScore(Precision.round(x.getFinalScore() / (resultList.size() * 6) * 100, 0));
+            x.setFinalScore(Precision.round(x.getFinalScore() / (resultList.size() * 5) * 100, 0));
+
             if (x.getFinalScore() >= 85) {
                 x.setSuggestion(Constants.STRONG_BUY);
             } else if (x.getFinalScore() >= 70) {

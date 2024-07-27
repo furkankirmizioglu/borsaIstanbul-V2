@@ -11,20 +11,14 @@ import java.math.BigDecimal;
 @UtilityClass
 public class CalculateTools {
 
-    public static double priceToEarnings(double closePrice, ValuationInfo info) {
+    public static double priceToEarnings(double price, ValuationInfo info) {
         double currentEPS = info.getAnnualNetProfit().doubleValue() / info.getInitialCapital().doubleValue();
-        double pe = Precision.round(closePrice / currentEPS, 2);
+        double pe = Precision.round(price / currentEPS, 2);
         return pe > 0 ? pe : Double.NaN;
     }
 
-    public static double priceToEarningsGrowth(double closePrice, ValuationInfo info) {
-        double epsGrowthRate = (info.getAnnualNetProfit().doubleValue() - info.getPrevYearNetProfit().doubleValue()) / info.getPrevYearNetProfit().doubleValue() * 100;
-        double pe = priceToEarnings(closePrice, info);
-        return (pe > 0 && epsGrowthRate > 0) ? Precision.round(pe / epsGrowthRate, 4) : Double.NaN;
-    }
-
-    public static double priceToBookRatio(double closePrice, ValuationInfo info) {
-        return Precision.round(info.getInitialCapital().doubleValue() * closePrice / info.getEquity().doubleValue(), 2);
+    public static double priceToBookRatio(double price, ValuationInfo info) {
+        return Precision.round(info.getInitialCapital().doubleValue() * price / info.getEquity().doubleValue(), 2);
     }
 
     public static double netProfitMargin(ValuationInfo info) {
@@ -50,13 +44,19 @@ public class CalculateTools {
         return Precision.round(valuationInfo.getNetDebt().doubleValue() / valuationInfo.getAnnualEbitda().doubleValue(), 2);
     }
 
-    public static double marketValueToEbitda(double closePrice, ValuationInfo valuationInfo) {
+    public static double enterpriseValueToEbitda(double price, ValuationInfo valuationInfo) {
+        BigDecimal enterpriseValue = valuationInfo.getInitialCapital()
+                .multiply(BigDecimal.valueOf(price))
+                .add(valuationInfo.getNetDebt());
 
-        double marketValue = valuationInfo.getInitialCapital().doubleValue() * closePrice;
-        double actualOperationProfit = valuationInfo.getAnnualEbitda().doubleValue();
-        return Precision.round(marketValue / actualOperationProfit, 2);
-
+        return Precision.round(enterpriseValue.doubleValue() / valuationInfo.getNetDebt().doubleValue(), 2);
     }
+
+    public static double debtToEquity(ValuationInfo valuationInfo) {
+        return Precision.round(valuationInfo.getNetDebt().doubleValue() / valuationInfo.getEquity().doubleValue(), 2);
+    }
+
+    // =============== PARSING BALANCE SHEET UTILITY FUNCTIONS ==================
 
     public static BigDecimal ebitda(FinancialValues values) {
         return values.getAnnualGrossProfit()
@@ -70,5 +70,6 @@ public class CalculateTools {
         return values.getTotalFinancialLiabilities()
                 .subtract(values.getCashAndEquivalents())
                 .subtract(values.getFinancialInvestments());
+
     }
 }

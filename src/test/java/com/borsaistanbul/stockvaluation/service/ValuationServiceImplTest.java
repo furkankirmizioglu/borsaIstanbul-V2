@@ -33,11 +33,9 @@ class ValuationServiceImplTest {
                 .price(defaultDouble)
                 .pe(defaultDouble)
                 .pb(defaultDouble)
-                .peg(defaultDouble)
-                .ebitdaMargin(defaultDouble)
-                .netProfitMargin(defaultDouble)
+                .enterpriseValueToEbitda(defaultDouble)
                 .netDebtToEbitda(defaultDouble)
-                .leverageRatio(defaultDouble)
+                .debtToEquity(defaultDouble)
                 .finalScore(defaultDouble)
                 .suggestion(TEST)
                 .build());

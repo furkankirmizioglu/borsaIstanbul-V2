@@ -1,6 +1,7 @@
 package com.borsaistanbul.stockvaluation.business.valuation;
 
-import com.borsaistanbul.stockvaluation.client.TechnicalDataService;
+import com.borsaistanbul.stockvaluation.client.GetCurrentPriceResponse;
+import com.borsaistanbul.stockvaluation.client.TechnicalDataClient;
 import com.borsaistanbul.stockvaluation.dto.entity.ValuationInfo;
 import com.borsaistanbul.stockvaluation.dto.model.FinancialValues;
 import com.borsaistanbul.stockvaluation.dto.model.ResponseData;
@@ -11,13 +12,15 @@ import com.borsaistanbul.stockvaluation.utils.CalculateTools;
 import com.borsaistanbul.stockvaluation.utils.Constants;
 import com.borsaistanbul.stockvaluation.utils.ResponseCodes;
 import com.borsaistanbul.stockvaluation.utils.Utils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.math3.util.Precision;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
@@ -27,42 +30,38 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import static com.borsaistanbul.stockvaluation.utils.Constants.FINANCIAL_LIABILITIES;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class ValuationBusinessImpl implements ValuationBusiness {
 
     private final CompanyInfoRepository companyInfoRepository;
     private final ValuationInfoRepository valuationInfoRepository;
-    private final TechnicalDataService technicalDataService;
+    private final TechnicalDataClient technicalDataService;
 
     private String industryInfo;
-
-    @Autowired
-    public ValuationBusinessImpl(CompanyInfoRepository companyInfoRepository,
-                                 ValuationInfoRepository valuationInfoRepository,
-                                 TechnicalDataService technicalDataService) {
-        this.companyInfoRepository = companyInfoRepository;
-        this.valuationInfoRepository = valuationInfoRepository;
-        this.technicalDataService = technicalDataService;
-    }
 
     @Override
     public List<ResponseData> business(String industry) {
 
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
+
         industryInfo = industry;
         log.info("{} sektörü için değerleme hesaplamaları başladı...", industryInfo);
-
 
         List<String> tickerList = companyInfoRepository.findTickerByIndustry(industryInfo);
 
         List<ResponseData> responseDataList = new ArrayList<>();
-        for (String ticker : tickerList) {
+
+        tickerList.forEach(ticker -> {
 
             String companyName = companyInfoRepository.findCompanyNameByTicker(ticker);
             Optional<ValuationInfo> info = valuationInfoRepository.findAllByTicker(ticker);
@@ -71,8 +70,16 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                 info = Optional.of(getAndSaveFinancialData(ticker));
             }
 
-            HashMap<String, Double> priceHashMap = technicalDataService.fetchTechnicalData(ticker);
-            double price = priceHashMap.get("price");
+            double price;
+
+            ResponseEntity<GetCurrentPriceResponse> getCurrentPriceResponse =
+                    technicalDataService.getCurrentPrice(ticker);
+
+            if (getCurrentPriceResponse.getStatusCode().equals(HttpStatus.OK)) {
+                price = Objects.requireNonNull(getCurrentPriceResponse.getBody()).getPrice();
+            } else {
+                throw new StockValuationApiException("99", "Fiyat bilgisi getirilemedi.", null);
+            }
 
             info.ifPresent(valuationInfo -> responseDataList.add(
                     ResponseData.builder()
@@ -80,23 +87,23 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                             .companyName(companyName)
                             .ticker(ticker)
                             .latestBalanceSheetTerm(valuationInfo.getBalanceSheetTerm())
-                            .pb(CalculateTools.priceToBookRatio(price, valuationInfo))
                             .pe(CalculateTools.priceToEarnings(price, valuationInfo))
-                            .peg(CalculateTools.priceToEarningsGrowth(price, valuationInfo))
-                            .ebitdaMargin(CalculateTools.ebitdaMargin(valuationInfo))
+                            .pb(CalculateTools.priceToBookRatio(price, valuationInfo))
+                            .enterpriseValueToEbitda(CalculateTools.enterpriseValueToEbitda(price, valuationInfo))
                             .netDebtToEbitda(CalculateTools.netDebtToEbitda(valuationInfo))
-                            .netProfitMargin(CalculateTools.netProfitMargin(valuationInfo))
-                            .leverageRatio(CalculateTools.leverageRatio(valuationInfo))
-                            .finalScore(0)
+                            .debtToEquity(CalculateTools.debtToEquity(valuationInfo))
                             .build()));
 
             log.info("{} için değerleme işlemi tamamlandı...", ticker);
-        }
+        });
+
         stopWatch.stop();
         log.info("{} sektörü için değerleme hesaplamaları {} saniyede tamamlandı...", industryInfo,
                 Precision.round((float) stopWatch.getTime() / 1000, 2));
+
         log.info("Hisse başı ortalama hesaplama süresi: {} saniye...",
                 Precision.round((float) stopWatch.getTime() / 1000 / tickerList.size(), 2));
+
         return responseDataList;
     }
 
@@ -160,8 +167,8 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         entity.setInitialCapital(values.getInitialCapital());
         entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
         entity.setNetDebt(CalculateTools.netDebt(values));
-        entity.setPrevTtmNetProfit(values.getPrevTtmNetProfit());
-        entity.setTtmNetProfit(values.getTtmNetProfit());
+        entity.setPrevYearNetProfit(values.getPrevYearNetProfit());
+        entity.setAnnualNetProfit(values.getAnnualNetProfit());
         entity.setTicker(ticker);
         entity.setTotalAssets(values.getTotalAssets());
         entity.setLongTermLiabilities(values.getTotalLongTermLiabilities());
@@ -170,7 +177,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
         workbook.close();
 
-        log.info("{} için bilanço kaydetme başarıyla tamamlandı.", ticker);
+        log.info("{} için bilanço başarıyla kaydedildi.", ticker);
 
         return entity;
     }
@@ -218,7 +225,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                     case Constants.INCOME_FROM_SALES -> values.setAnnualSales(CalculateTools.cellValue(row, 1));
                     case Constants.INCOME_FROM_OTHER_FIELDS ->
                             values.setIncomeFromOtherFields(CalculateTools.cellValue(row, 1));
-                    case Constants.GROSS_PROFIT -> values.setGrossProfit(CalculateTools.cellValue(row, 1));
+                    case Constants.GROSS_PROFIT -> values.setAnnualGrossProfit(CalculateTools.cellValue(row, 1));
                     case Constants.ADMINISTRATIVE_EXPENSES ->
                             values.setAdministrativeExpenses(CalculateTools.cellValue(row, 1));
                     case Constants.MARKETING_SALES_DISTRIBUTION_EXPENSES ->
@@ -226,8 +233,8 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                     case Constants.RESEARCH_DEVELOPMENT_EXPENSES ->
                             values.setResearchDevelopmentExpenses(CalculateTools.cellValue(row, 1));
                     case Constants.PARENT_COMPANY_SHARES -> {
-                        values.setTtmNetProfit(CalculateTools.cellValue(row, 1));
-                        values.setPrevTtmNetProfit(CalculateTools.cellValue(row, 5));
+                        values.setAnnualNetProfit(CalculateTools.cellValue(row, 1));
+                        values.setPrevYearNetProfit(CalculateTools.cellValue(row, 5));
                     }
                     case Constants.AMORTIZATION -> values.setAmortization(CalculateTools.cellValue(row, 1));
                     default -> {
@@ -238,5 +245,4 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         }
 
     }
-
 }

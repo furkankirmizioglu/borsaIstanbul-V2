@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ValuationApi.class)
@@ -37,9 +37,7 @@ class ValuationApiTest {
 
     @BeforeEach
     void init() {
-
         responseDataList = new ArrayList<>();
-
         responseDataList.add(ResponseData.builder()
                 .ticker(TEST)
                 .companyName(TEST)
@@ -47,35 +45,26 @@ class ValuationApiTest {
                 .price(defaultDouble)
                 .pe(defaultDouble)
                 .pb(defaultDouble)
-                .peg(defaultDouble)
-                .ebitdaMargin(defaultDouble)
-                .netProfitMargin(defaultDouble)
+                .enterpriseValueToEbitda(defaultDouble)
                 .netDebtToEbitda(defaultDouble)
-                .leverageRatio(defaultDouble)
+                .debtToEquity(defaultDouble)
                 .finalScore(defaultDouble)
                 .suggestion(TEST)
                 .build());
-
     }
 
     @Test
     @SneakyThrows
     void test() {
-
-
         when(valuationService.valuation(anyString())).thenReturn(responseDataList);
 
-        mockMvc.perform(post("/valuation/list")
-                        .content("{industry: 'Bankacılık'}")
+        mockMvc.perform(get("/valuation/list")
+                        .param("industry", "Otomotiv")
                         .contentType(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8"))
                 .andExpect(status().isOk())
                 .andReturn();
 
         verify(valuationService, times(1)).valuation(anyString());
-
-
     }
-
-
 }
