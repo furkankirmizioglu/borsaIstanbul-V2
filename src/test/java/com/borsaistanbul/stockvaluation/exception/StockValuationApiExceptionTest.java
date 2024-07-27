@@ -1,9 +1,10 @@
 package com.borsaistanbul.stockvaluation.exception;
 
 import com.borsaistanbul.stockvaluation.utils.ResponseCodes;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class StockValuationApiExceptionTest {
 
@@ -21,9 +22,9 @@ class StockValuationApiExceptionTest {
 
     @Test
     void test() {
-        Assertions.assertEquals(ResponseCodes.OK, exception.getResponseCode());
-        Assertions.assertEquals(ResponseCodes.OK_MESSAGE, exception.getResponseDesc());
-        Assertions.assertEquals("OK", exception.getData());
+        assertEquals(ResponseCodes.OK, exception.getResponseCode());
+        assertEquals(ResponseCodes.OK_MESSAGE, exception.getResponseDesc());
+        assertEquals("OK", exception.getData());
     }
 
 }

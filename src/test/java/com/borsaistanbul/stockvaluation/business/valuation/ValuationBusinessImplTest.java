@@ -7,7 +7,6 @@ import com.borsaistanbul.stockvaluation.dto.model.ResponseData;
 import com.borsaistanbul.stockvaluation.repository.CompanyInfoRepository;
 import com.borsaistanbul.stockvaluation.repository.ValuationInfoRepository;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.when;
@@ -81,10 +81,11 @@ class ValuationBusinessImplTest {
 
         List<ResponseData> responseDataList = valuationBusiness.business(industry);
 
-        Assertions.assertNotNull(responseDataList.getFirst());
+        assertNotNull(responseDataList.getFirst());
 
     }
 
+    @Test
     @SneakyThrows
     void businessTestValuationInfoNotFound() {
 
@@ -97,7 +98,7 @@ class ValuationBusinessImplTest {
         when(valuationInfoRepository.findAllByTicker(anyString())).thenReturn(Optional.empty());
 
         List<ResponseData> responseDataList = valuationBusiness.business(industry);
-        Assertions.assertNotNull(responseDataList.getFirst());
+        assertNotNull(responseDataList.getFirst());
 
     }
 }

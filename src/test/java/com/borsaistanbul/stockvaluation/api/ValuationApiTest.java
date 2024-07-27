@@ -34,7 +34,6 @@ class ValuationApiTest {
     @MockBean
     ValuationService valuationService;
 
-
     @BeforeEach
     void init() {
         responseDataList = new ArrayList<>();

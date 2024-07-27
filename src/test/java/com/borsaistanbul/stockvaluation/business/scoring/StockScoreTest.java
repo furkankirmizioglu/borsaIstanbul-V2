@@ -1,13 +1,17 @@
 package com.borsaistanbul.stockvaluation.business.scoring;
 
 import com.borsaistanbul.stockvaluation.dto.model.ResponseData;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@ExtendWith(MockitoExtension.class)
 class StockScoreTest {
 
     private StockScoreImpl stockScore;
@@ -70,7 +74,7 @@ class StockScoreTest {
     @Test
     void test() {
         stockScore.scoring(responseDataList);
-        Assertions.assertNotNull(responseDataList);
+        assertNotNull(responseDataList);
     }
 
 }

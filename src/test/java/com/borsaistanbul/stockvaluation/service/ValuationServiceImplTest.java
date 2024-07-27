@@ -3,30 +3,35 @@ package com.borsaistanbul.stockvaluation.service;
 import com.borsaistanbul.stockvaluation.business.scoring.StockScore;
 import com.borsaistanbul.stockvaluation.business.valuation.ValuationBusiness;
 import com.borsaistanbul.stockvaluation.dto.model.ResponseData;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class ValuationServiceImplTest {
 
-    private ValuationService valuationService;
+    @Mock
     private StockScore stockScore;
+
+    @Mock
+    private ValuationBusiness valuationBusiness;
+
+    private ValuationService valuationService;
     private static final String TEST = "TEST";
     private static final double defaultDouble = 10.0;
     private List<ResponseData> responseDataList;
 
     @BeforeEach
     void init() {
-        ValuationBusiness valuationBusiness = mock(ValuationBusiness.class);
-        stockScore = mock(StockScore.class);
-        responseDataList = new ArrayList<>();
-
-        responseDataList.add(ResponseData.builder()
+        responseDataList = List.of(ResponseData.builder()
                 .ticker(TEST)
                 .companyName(TEST)
                 .latestBalanceSheetTerm(TEST)
@@ -45,9 +50,8 @@ class ValuationServiceImplTest {
 
     @Test
     void test() {
-        when(valuationService.valuation(anyString())).thenReturn(responseDataList);
         when(stockScore.scoring(anyList())).thenReturn(responseDataList);
         List<ResponseData> output = valuationService.valuation("Bankacılık");
-        Assertions.assertFalse(output.isEmpty());
+        assertFalse(output.isEmpty());
     }
 }

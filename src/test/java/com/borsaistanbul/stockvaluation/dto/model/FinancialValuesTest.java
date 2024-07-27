@@ -1,11 +1,15 @@
 package com.borsaistanbul.stockvaluation.dto.model;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@ExtendWith(MockitoExtension.class)
 class FinancialValuesTest {
 
     private FinancialValues financialValues;
@@ -34,22 +38,22 @@ class FinancialValuesTest {
 
     @Test
     void test() {
-        Assertions.assertEquals(BigDecimal.TEN, financialValues.getCashAndEquivalents());
-        Assertions.assertEquals(BigDecimal.TEN, financialValues.getFinancialInvestments());
-        Assertions.assertEquals(new BigDecimal(100), financialValues.getTotalFinancialLiabilities());
-        Assertions.assertEquals(BigDecimal.TEN, financialValues.getAnnualGrossProfit());
-        Assertions.assertEquals(BigDecimal.TEN, financialValues.getAdministrativeExpenses());
-        Assertions.assertEquals(BigDecimal.TEN, financialValues.getMarketingSalesDistributionExpenses());
-        Assertions.assertEquals(BigDecimal.TEN, financialValues.getResearchDevelopmentExpenses());
-        Assertions.assertEquals(BigDecimal.TEN, financialValues.getAmortization());
-        Assertions.assertEquals(BigDecimal.TEN, financialValues.getEquities());
-        Assertions.assertEquals(BigDecimal.TEN, financialValues.getInitialCapital());
-        Assertions.assertEquals(BigDecimal.TEN, financialValues.getTotalAssets());
-        Assertions.assertEquals(BigDecimal.TEN, financialValues.getTotalShortTermLiabilities());
-        Assertions.assertEquals(BigDecimal.TEN, financialValues.getTotalLongTermLiabilities());
-        Assertions.assertEquals(BigDecimal.TEN, financialValues.getAnnualSales());
-        Assertions.assertEquals(BigDecimal.TEN, financialValues.getAnnualNetProfit());
-        Assertions.assertEquals(BigDecimal.TEN, financialValues.getPrevYearNetProfit());
+        assertEquals(BigDecimal.TEN, financialValues.getCashAndEquivalents());
+        assertEquals(BigDecimal.TEN, financialValues.getFinancialInvestments());
+        assertEquals(new BigDecimal(100), financialValues.getTotalFinancialLiabilities());
+        assertEquals(BigDecimal.TEN, financialValues.getAnnualGrossProfit());
+        assertEquals(BigDecimal.TEN, financialValues.getAdministrativeExpenses());
+        assertEquals(BigDecimal.TEN, financialValues.getMarketingSalesDistributionExpenses());
+        assertEquals(BigDecimal.TEN, financialValues.getResearchDevelopmentExpenses());
+        assertEquals(BigDecimal.TEN, financialValues.getAmortization());
+        assertEquals(BigDecimal.TEN, financialValues.getEquities());
+        assertEquals(BigDecimal.TEN, financialValues.getInitialCapital());
+        assertEquals(BigDecimal.TEN, financialValues.getTotalAssets());
+        assertEquals(BigDecimal.TEN, financialValues.getTotalShortTermLiabilities());
+        assertEquals(BigDecimal.TEN, financialValues.getTotalLongTermLiabilities());
+        assertEquals(BigDecimal.TEN, financialValues.getAnnualSales());
+        assertEquals(BigDecimal.TEN, financialValues.getAnnualNetProfit());
+        assertEquals(BigDecimal.TEN, financialValues.getPrevYearNetProfit());
     }
 
 }

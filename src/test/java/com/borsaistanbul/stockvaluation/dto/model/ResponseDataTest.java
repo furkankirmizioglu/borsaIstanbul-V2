@@ -1,9 +1,13 @@
 package com.borsaistanbul.stockvaluation.dto.model;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@ExtendWith(MockitoExtension.class)
 class ResponseDataTest {
 
     private ResponseData responseData;
@@ -42,16 +46,16 @@ class ResponseDataTest {
 
     @Test
     void test() {
-        Assertions.assertEquals(TEST, responseData.getTicker());
-        Assertions.assertEquals(TEST, responseData.getCompanyName());
-        Assertions.assertEquals(TEST, responseData.getLatestBalanceSheetTerm());
-        Assertions.assertEquals(defaultDouble, responseData.getPrice());
-        Assertions.assertEquals(defaultDouble, responseData.getPe());
-        Assertions.assertEquals(defaultDouble, responseData.getPb());
-        Assertions.assertEquals(defaultDouble, responseData.getEnterpriseValueToEbitda());
-        Assertions.assertEquals(defaultDouble, responseData.getDebtToEquity());
-        Assertions.assertEquals(defaultDouble, responseData.getNetDebtToEbitda());
-        Assertions.assertEquals(TEST, responseData.getSuggestion());
+        assertEquals(TEST, responseData.getTicker());
+        assertEquals(TEST, responseData.getCompanyName());
+        assertEquals(TEST, responseData.getLatestBalanceSheetTerm());
+        assertEquals(defaultDouble, responseData.getPrice());
+        assertEquals(defaultDouble, responseData.getPe());
+        assertEquals(defaultDouble, responseData.getPb());
+        assertEquals(defaultDouble, responseData.getEnterpriseValueToEbitda());
+        assertEquals(defaultDouble, responseData.getDebtToEquity());
+        assertEquals(defaultDouble, responseData.getNetDebtToEbitda());
+        assertEquals(TEST, responseData.getSuggestion());
     }
 
 }
