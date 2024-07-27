@@ -1,7 +1,7 @@
 package com.borsaistanbul.stockvaluation.business.scoring;
 
+import com.borsaistanbul.stockvaluation.dto.enums.Suggestion;
 import com.borsaistanbul.stockvaluation.dto.model.ResponseData;
-import com.borsaistanbul.stockvaluation.utils.Constants;
 import org.apache.commons.math3.util.Precision;
 import org.springframework.stereotype.Service;
 
@@ -59,22 +59,26 @@ public class StockScoreImpl implements StockScore {
         // Total score will divide to list size multiply by number of indicators (5) count and index to 100.
         resultList.forEach(x -> {
             x.setFinalScore(Precision.round(x.getFinalScore() / (resultList.size() * 5) * 100, 0));
-
-            if (x.getFinalScore() >= 85) {
-                x.setSuggestion(Constants.STRONG_BUY);
-            } else if (x.getFinalScore() >= 70) {
-                x.setSuggestion(Constants.BUY);
-            } else if (x.getFinalScore() >= 55) {
-                x.setSuggestion(Constants.NEUTRAL);
-            } else if (x.getFinalScore() >= 40) {
-                x.setSuggestion(Constants.SELL);
-            } else {
-                x.setSuggestion(Constants.STRONG_SELL);
-            }
+            x.setSuggestion(makeSuggestion(x.getFinalScore()));
         });
 
         // Total scores will sort by highest to lowest.
         resultList.sort(Comparator.comparing(ResponseData::getFinalScore).reversed());
         return resultList;
     }
+
+    private String makeSuggestion(double score) {
+        if (score >= 85) {
+            return (Suggestion.STRONG_BUY.label);
+        } else if (score >= 70) {
+            return (Suggestion.BUY.label);
+        } else if (score >= 55) {
+            return (Suggestion.NEUTRAL.label);
+        } else if (score >= 40) {
+            return (Suggestion.SELL.label);
+        } else {
+            return (Suggestion.STRONG_SELL.label);
+        }
+    }
+
 }

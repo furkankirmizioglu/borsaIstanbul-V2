@@ -26,7 +26,6 @@ public class ValuationApi {
     )
     @GetMapping("/list")
     @ApiResponse(responseCode = "200", description = "Valuation successfully completed.")
-    @CrossOrigin(origins = "http://localhost:3000")
     public ResponseEntity<List<ResponseData>> valuation(@RequestParam String industry) {
         return ResponseEntity.ok(service.valuation(industry));
     }

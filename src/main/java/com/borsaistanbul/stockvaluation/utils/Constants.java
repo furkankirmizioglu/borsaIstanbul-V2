@@ -25,11 +25,4 @@ public class Constants {
     public static final String TOTAL_SHORT_TERM_LIABILITIES = "Toplam Kısa Vadeli Yükümlülükler";
     public static final String TOTAL_LONG_TERM_LIABILITIES = "Toplam Uzun Vadeli Yükümlülükler";
 
-    // UI CONSTANTS
-    public static final String STRONG_BUY = "Güçlü Al";
-    public static final String BUY = "Al";
-    public static final String NEUTRAL = "Nötr";
-    public static final String SELL = "Sat";
-    public static final String STRONG_SELL = "Güçlü Sat";
-
 }
