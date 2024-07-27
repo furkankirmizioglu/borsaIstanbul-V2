@@ -13,7 +13,7 @@ public class FinancialValues {
     private BigDecimal cashAndEquivalents;
     private BigDecimal financialInvestments;
     private BigDecimal totalFinancialLiabilities;
-    private BigDecimal grossProfit;
+    private BigDecimal annualGrossProfit;
     private BigDecimal administrativeExpenses;
     private BigDecimal marketingSalesDistributionExpenses;
     private BigDecimal researchDevelopmentExpenses;
@@ -27,15 +27,15 @@ public class FinancialValues {
 
     private BigDecimal annualSales;
     private BigDecimal incomeFromOtherFields;
-    private BigDecimal ttmNetProfit;
-    private BigDecimal prevTtmNetProfit;
+    private BigDecimal annualNetProfit;
+    private BigDecimal prevYearNetProfit;
 
     public void nullToZeroConverter() {
 
         this.cashAndEquivalents = setIfNullToZero(this.cashAndEquivalents);
         this.financialInvestments = setIfNullToZero(this.financialInvestments);
         this.totalFinancialLiabilities = setIfNullToZero(this.totalFinancialLiabilities);
-        this.grossProfit = setIfNullToZero(this.grossProfit);
+        this.annualGrossProfit = setIfNullToZero(this.annualGrossProfit);
         this.administrativeExpenses = setIfNullToZero(this.administrativeExpenses);
         this.marketingSalesDistributionExpenses = setIfNullToZero(this.marketingSalesDistributionExpenses);
         this.researchDevelopmentExpenses = setIfNullToZero(this.researchDevelopmentExpenses);
@@ -47,8 +47,8 @@ public class FinancialValues {
         this.totalLongTermLiabilities = setIfNullToZero(this.totalLongTermLiabilities);
         this.annualSales = setIfNullToZero(this.annualSales);
         this.incomeFromOtherFields = setIfNullToZero(this.incomeFromOtherFields);
-        this.ttmNetProfit = setIfNullToZero(this.ttmNetProfit);
-        this.prevTtmNetProfit = setIfNullToZero(this.prevTtmNetProfit);
+        this.annualNetProfit = setIfNullToZero(this.annualNetProfit);
+        this.prevYearNetProfit = setIfNullToZero(this.prevYearNetProfit);
     }
 
 
