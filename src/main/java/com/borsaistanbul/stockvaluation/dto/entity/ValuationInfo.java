@@ -36,9 +36,6 @@ public class ValuationInfo {
     @Column(name = "ANNUAL_EBITDA")
     private BigDecimal annualEbitda;
 
-    @Column(name = "ANNUAL_SALES")
-    private BigDecimal annualSales;
-
     @Column(name = "ANNUAL_NET_PROFIT")
     private BigDecimal annualNetProfit;
 

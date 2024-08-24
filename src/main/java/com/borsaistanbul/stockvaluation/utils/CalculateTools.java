@@ -21,16 +21,6 @@ public class CalculateTools {
         return Precision.round(info.getInitialCapital().doubleValue() * price / info.getEquity().doubleValue(), 2);
     }
 
-    public static double netProfitMargin(ValuationInfo info) {
-        double netProfitMargin = Precision.round(info.getAnnualNetProfit().doubleValue() / info.getAnnualSales().doubleValue() * 100, 2);
-        return (netProfitMargin != Double.NEGATIVE_INFINITY && netProfitMargin != Double.POSITIVE_INFINITY) ? netProfitMargin : Double.NaN;
-    }
-
-    public static double ebitdaMargin(ValuationInfo info) {
-        double ebitdaMargin = Precision.round(info.getAnnualEbitda().doubleValue() / (info.getAnnualSales()).doubleValue() * 100, 2);
-        return (ebitdaMargin != Double.NEGATIVE_INFINITY && ebitdaMargin != Double.POSITIVE_INFINITY) ? ebitdaMargin : Double.NaN;
-    }
-
     public static double leverageRatio(ValuationInfo info) {
         BigDecimal totalLiabilities = info.getLongTermLiabilities().add(info.getShortTermLiabilities());
         return Precision.round(totalLiabilities.doubleValue() / info.getTotalAssets().doubleValue() * 100, 2);
@@ -49,11 +39,7 @@ public class CalculateTools {
                 .multiply(BigDecimal.valueOf(price))
                 .add(valuationInfo.getNetDebt());
 
-        return Precision.round(enterpriseValue.doubleValue() / valuationInfo.getNetDebt().doubleValue(), 2);
-    }
-
-    public static double debtToEquity(ValuationInfo valuationInfo) {
-        return Precision.round(valuationInfo.getNetDebt().doubleValue() / valuationInfo.getEquity().doubleValue(), 2);
+        return Precision.round(enterpriseValue.doubleValue() / valuationInfo.getAnnualEbitda().doubleValue(), 2);
     }
 
     // =============== PARSING BALANCE SHEET UTILITY FUNCTIONS ==================
@@ -67,7 +53,8 @@ public class CalculateTools {
     }
 
     public static BigDecimal netDebt(FinancialValues values) {
-        return values.getTotalFinancialLiabilities()
+        return values.getShortTermFinancialDebts()
+                .add(values.getLongTermFinancialDebts())
                 .subtract(values.getCashAndEquivalents())
                 .subtract(values.getFinancialInvestments());
 

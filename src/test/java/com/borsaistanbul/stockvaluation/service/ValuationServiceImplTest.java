@@ -40,7 +40,7 @@ class ValuationServiceImplTest {
                 .pb(defaultDouble)
                 .enterpriseValueToEbitda(defaultDouble)
                 .netDebtToEbitda(defaultDouble)
-                .debtToEquity(defaultDouble)
+                .leverage(defaultDouble)
                 .finalScore(defaultDouble)
                 .suggestion(TEST)
                 .build());

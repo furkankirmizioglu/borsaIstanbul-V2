@@ -7,14 +7,13 @@ public class Constants {
     public static final String HOLDINGS = "Holding";
 
     // BALANCE SHEET CONSTANTS
-    public static final String FINTABLES = "https://fintables.com/sirketler/{0}/finansal-tablolar/excel?currency=";
+    public static final String FINTABLES = "https://fintables.com/sirketler/{0}/finansal-tablolar/excel?currency=TRY";
     public static final String INITIAL_CAPITAL = "Ödenmiş Sermaye";
     public static final String CASH_AND_EQUIVALENTS = "Nakit ve Nakit Benzerleri";
     public static final String FINANCIAL_LIABILITIES = "Finansal Borçlar";
     public static final String FINANCIAL_INVESTMENTS = "Finansal Yatırımlar";
     public static final String EQUITIES = "Ana Ortaklığa Ait Özkaynaklar";
     public static final String PARENT_COMPANY_SHARES = "Ana Ortaklık Payları";
-    public static final String INCOME_FROM_SALES = "Satış Gelirleri";
     public static final String INCOME_FROM_OTHER_FIELDS = "Faiz, Ücret, Prim, Komisyon ve Diğer Gelirler";
     public static final String GROSS_PROFIT = "Brüt Kar (Zarar)";
     public static final String ADMINISTRATIVE_EXPENSES = "Genel Yönetim Giderleri (-)";

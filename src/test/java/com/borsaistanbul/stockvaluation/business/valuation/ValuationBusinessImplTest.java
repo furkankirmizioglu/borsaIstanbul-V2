@@ -59,7 +59,6 @@ class ValuationBusinessImplTest {
         valuationInfo1.setEquity(BigDecimal.TEN);
         valuationInfo1.setInitialCapital(BigDecimal.TEN);
         valuationInfo1.setAnnualEbitda(BigDecimal.TEN);
-        valuationInfo1.setAnnualSales(BigDecimal.TEN);
         valuationInfo1.setAnnualNetProfit(BigDecimal.TEN);
         valuationInfo1.setPrevYearNetProfit(new BigDecimal(5));
         valuationInfo1.setNetDebt(BigDecimal.TEN);

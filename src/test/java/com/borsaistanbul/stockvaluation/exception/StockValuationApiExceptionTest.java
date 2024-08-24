@@ -12,11 +12,10 @@ class StockValuationApiExceptionTest {
 
     @BeforeEach
     void init() {
-        exception = new StockValuationApiException(ResponseCodes.OK, ResponseCodes.OK_MESSAGE, "OK");
+        exception = new StockValuationApiException(ResponseCodes.OK, ResponseCodes.OK_MESSAGE);
         exception = StockValuationApiException.builder()
                 .responseCode(ResponseCodes.OK)
                 .responseDesc(ResponseCodes.OK_MESSAGE)
-                .data("OK")
                 .build();
     }
 
@@ -24,7 +23,6 @@ class StockValuationApiExceptionTest {
     void test() {
         assertEquals(ResponseCodes.OK, exception.getResponseCode());
         assertEquals(ResponseCodes.OK_MESSAGE, exception.getResponseDesc());
-        assertEquals("OK", exception.getData());
     }
 
 }

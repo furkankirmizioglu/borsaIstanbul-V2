@@ -12,7 +12,8 @@ public class FinancialValues {
 
     private BigDecimal cashAndEquivalents;
     private BigDecimal financialInvestments;
-    private BigDecimal totalFinancialLiabilities;
+    private BigDecimal shortTermFinancialDebts;
+    private BigDecimal longTermFinancialDebts;
     private BigDecimal annualGrossProfit;
     private BigDecimal administrativeExpenses;
     private BigDecimal marketingSalesDistributionExpenses;
@@ -25,7 +26,6 @@ public class FinancialValues {
     private BigDecimal totalShortTermLiabilities;
     private BigDecimal totalLongTermLiabilities;
 
-    private BigDecimal annualSales;
     private BigDecimal incomeFromOtherFields;
     private BigDecimal annualNetProfit;
     private BigDecimal prevYearNetProfit;
@@ -34,7 +34,8 @@ public class FinancialValues {
 
         this.cashAndEquivalents = setIfNullToZero(this.cashAndEquivalents);
         this.financialInvestments = setIfNullToZero(this.financialInvestments);
-        this.totalFinancialLiabilities = setIfNullToZero(this.totalFinancialLiabilities);
+        this.shortTermFinancialDebts = setIfNullToZero(this.shortTermFinancialDebts);
+        this.longTermFinancialDebts = setIfNullToZero(this.longTermFinancialDebts);
         this.annualGrossProfit = setIfNullToZero(this.annualGrossProfit);
         this.administrativeExpenses = setIfNullToZero(this.administrativeExpenses);
         this.marketingSalesDistributionExpenses = setIfNullToZero(this.marketingSalesDistributionExpenses);
@@ -45,7 +46,6 @@ public class FinancialValues {
         this.totalAssets = setIfNullToZero(this.totalAssets);
         this.totalShortTermLiabilities = setIfNullToZero(this.totalShortTermLiabilities);
         this.totalLongTermLiabilities = setIfNullToZero(this.totalLongTermLiabilities);
-        this.annualSales = setIfNullToZero(this.annualSales);
         this.incomeFromOtherFields = setIfNullToZero(this.incomeFromOtherFields);
         this.annualNetProfit = setIfNullToZero(this.annualNetProfit);
         this.prevYearNetProfit = setIfNullToZero(this.prevYearNetProfit);

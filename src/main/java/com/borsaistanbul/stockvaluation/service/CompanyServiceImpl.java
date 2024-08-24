@@ -61,7 +61,7 @@ public class CompanyServiceImpl implements CompanyService {
             workbook.close();
             file.close();
         } catch (IOException ex) {
-            throw new StockValuationApiException(ResponseCodes.API_EXCEPTION, ex.getMessage(), null);
+            throw new StockValuationApiException(ResponseCodes.API_EXCEPTION, ex.getMessage());
         }
     }
 

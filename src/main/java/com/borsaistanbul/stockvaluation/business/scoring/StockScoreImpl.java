@@ -45,7 +45,7 @@ public class StockScoreImpl implements StockScore {
 
     // Scoring based on Debt/Equity ratio.
     public void debtToEquityScore(List<ResponseData> resultList) {
-        resultList.sort(Comparator.comparing(ResponseData::getDebtToEquity));
+        resultList.sort(Comparator.comparing(ResponseData::getLeverage));
         resultList.forEach(x -> x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x))));
     }
 

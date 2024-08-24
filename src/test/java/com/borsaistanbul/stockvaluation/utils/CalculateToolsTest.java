@@ -26,7 +26,6 @@ class CalculateToolsTest {
         valuationInfo.setEquity(BigDecimal.TEN);
         valuationInfo.setInitialCapital(BigDecimal.TEN);
         valuationInfo.setAnnualEbitda(BigDecimal.TEN);
-        valuationInfo.setAnnualSales(BigDecimal.TEN);
         valuationInfo.setAnnualNetProfit(BigDecimal.TEN);
         valuationInfo.setPrevYearNetProfit(new BigDecimal(5));
         valuationInfo.setNetDebt(BigDecimal.TEN);
@@ -39,7 +38,6 @@ class CalculateToolsTest {
         financialValues.setAmortization(BigDecimal.TEN);
         financialValues.setMarketingSalesDistributionExpenses(BigDecimal.TEN);
         financialValues.setResearchDevelopmentExpenses(BigDecimal.TEN);
-        financialValues.setTotalFinancialLiabilities(new BigDecimal(100));
         financialValues.setCashAndEquivalents(BigDecimal.TEN);
         financialValues.setFinancialInvestments(BigDecimal.TEN);
         financialValues.setAnnualGrossProfit(BigDecimal.TEN);
@@ -49,17 +47,6 @@ class CalculateToolsTest {
     void priceToEarningsTest() {
         double pe = CalculateTools.priceToEarnings(10.0, valuationInfo);
         Assertions.assertEquals(10, pe);
-    }
-
-    @Test
-    void netProfitMarginTest() {
-        double result = CalculateTools.netProfitMargin(valuationInfo);
-        Assertions.assertEquals(100, result);
-    }
-    @Test
-    void ebitdaMarginTest() {
-        double result = CalculateTools.netProfitMargin(valuationInfo);
-        Assertions.assertEquals(100, result);
     }
 
     @Test
@@ -80,16 +67,8 @@ class CalculateToolsTest {
     }
 
     @Test
-    void ebitdaMargin() {
-        double result = CalculateTools.ebitdaMargin(valuationInfo);
-        Assertions.assertEquals(100, result);
-    }
-
-    @Test
     void netDebtToEbitda() {
         double result = CalculateTools.netDebtToEbitda(valuationInfo);
         Assertions.assertEquals(1, result);
     }
-
-
 }

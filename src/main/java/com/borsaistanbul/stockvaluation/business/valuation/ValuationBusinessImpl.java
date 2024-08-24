@@ -9,7 +9,6 @@ import com.borsaistanbul.stockvaluation.exception.StockValuationApiException;
 import com.borsaistanbul.stockvaluation.repository.CompanyInfoRepository;
 import com.borsaistanbul.stockvaluation.repository.ValuationInfoRepository;
 import com.borsaistanbul.stockvaluation.utils.CalculateTools;
-import com.borsaistanbul.stockvaluation.utils.Constants;
 import com.borsaistanbul.stockvaluation.utils.ResponseCodes;
 import com.borsaistanbul.stockvaluation.utils.Utils;
 import lombok.RequiredArgsConstructor;
@@ -27,15 +26,13 @@ import org.springframework.util.ResourceUtils;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
-import static com.borsaistanbul.stockvaluation.utils.Constants.FINANCIAL_LIABILITIES;
+import static com.borsaistanbul.stockvaluation.utils.Constants.*;
 
 @Slf4j
 @Service
@@ -46,18 +43,15 @@ public class ValuationBusinessImpl implements ValuationBusiness {
     private final ValuationInfoRepository valuationInfoRepository;
     private final TechnicalDataClient technicalDataService;
 
-    private String industryInfo;
-
     @Override
     public List<ResponseData> business(String industry) {
 
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
 
-        industryInfo = industry;
-        log.info("{} sektörü için değerleme hesaplamaları başladı...", industryInfo);
+        log.info("{} sektörü için değerleme hesaplamaları başladı.", industry);
 
-        List<String> tickerList = companyInfoRepository.findTickerByIndustry(industryInfo);
+        List<String> tickerList = companyInfoRepository.findTickerByIndustry(industry);
 
         List<ResponseData> responseDataList = new ArrayList<>();
 
@@ -78,7 +72,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
             if (getCurrentPriceResponse.getStatusCode().equals(HttpStatus.OK)) {
                 price = Objects.requireNonNull(getCurrentPriceResponse.getBody()).getPrice();
             } else {
-                throw new StockValuationApiException("99", "Fiyat bilgisi getirilemedi.", null);
+                throw new StockValuationApiException("99", "Fiyat bilgisi getirilemedi.");
             }
 
             info.ifPresent(valuationInfo -> responseDataList.add(
@@ -91,17 +85,17 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                             .pb(CalculateTools.priceToBookRatio(price, valuationInfo))
                             .enterpriseValueToEbitda(CalculateTools.enterpriseValueToEbitda(price, valuationInfo))
                             .netDebtToEbitda(CalculateTools.netDebtToEbitda(valuationInfo))
-                            .debtToEquity(CalculateTools.debtToEquity(valuationInfo))
+                            .leverage(CalculateTools.leverageRatio(valuationInfo))
                             .build()));
 
-            log.info("{} için değerleme işlemi tamamlandı...", ticker);
+            log.info("{} için değerleme işlemi tamamlandı.", ticker);
         });
 
         stopWatch.stop();
-        log.info("{} sektörü için değerleme hesaplamaları {} saniyede tamamlandı...", industryInfo,
+        log.info("{} sektörü için değerleme hesaplamaları {} saniyede tamamlandı.", industry,
                 Precision.round((float) stopWatch.getTime() / 1000, 2));
 
-        log.info("Hisse başı ortalama hesaplama süresi: {} saniye...",
+        log.info("Hisse başı ortalama hesaplama süresi: {} saniye.",
                 Precision.round((float) stopWatch.getTime() / 1000 / tickerList.size(), 2));
 
         return responseDataList;
@@ -114,14 +108,14 @@ public class ValuationBusinessImpl implements ValuationBusiness {
             workbook.close();
             return response;
         } catch (IOException ex) {
-            throw new StockValuationApiException(ResponseCodes.UNKNOWN_ERROR, ex.getMessage(), null);
+            throw new StockValuationApiException(ResponseCodes.UNKNOWN_ERROR, ex.getMessage());
         }
 
     }
 
     private static XSSFWorkbook getExcelFile(String ticker) {
         try {
-            URL url = ResourceUtils.toURL(MessageFormat.format(Constants.FINTABLES, ticker));
+            URL url = ResourceUtils.toURL(MessageFormat.format(FINTABLES, ticker));
             URLConnection uc = url.openConnection();
             uc.addRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0");
             InputStream inputStream = uc.getInputStream();
@@ -137,7 +131,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
             fileOutputStream.close();
             return new XSSFWorkbook(fileName);
         } catch (IOException e) {
-            throw new StockValuationApiException(ResponseCodes.API_EXCEPTION, e.getMessage(), null);
+            throw new StockValuationApiException(ResponseCodes.API_EXCEPTION, e.getMessage());
         }
     }
 
@@ -155,12 +149,6 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
         ValuationInfo entity = new ValuationInfo();
         entity.setAnnualEbitda(CalculateTools.ebitda(values));
-
-        if (industryInfo.equals(Constants.HOLDINGS)) {
-            entity.setAnnualSales(values.getAnnualSales().add(values.getIncomeFromOtherFields()));
-        } else {
-            entity.setAnnualSales(values.getAnnualSales());
-        }
 
         entity.setBalanceSheetTerm(balanceSheet.getRow(0).getCell(1).getStringCellValue());
         entity.setEquity(values.getEquities());
@@ -184,65 +172,64 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
     private void balanceSheetParser(FinancialValues values, XSSFSheet balanceSheet) {
 
-        for (int j = 0; j < balanceSheet.getPhysicalNumberOfRows(); j++) {
-            Row row = balanceSheet.getRow(j);
+        Iterator<Row> iterator = balanceSheet.rowIterator();
+        iterator.next(); // skip header row.
+        iterator.forEachRemaining(row -> {
             if (row.getCell(0) != null) {
                 switch (row.getCell(0).getStringCellValue().trim()) {
-                    case FINANCIAL_LIABILITIES -> {
-                        if (Objects.equals(values.getTotalFinancialLiabilities(), null))
-                            values.setTotalFinancialLiabilities(CalculateTools.cellValue(row, 1));
-                        else
-                            values.setTotalFinancialLiabilities(
-                                    values.getTotalFinancialLiabilities().add(CalculateTools.cellValue(row, 1)));
-                    }
-                    case Constants.CASH_AND_EQUIVALENTS ->
-                            values.setCashAndEquivalents(CalculateTools.cellValue(row, 1));
-                    case Constants.FINANCIAL_INVESTMENTS -> {
-                        if (Objects.equals(values.getFinancialInvestments(), null)) {
-                            values.setFinancialInvestments(CalculateTools.cellValue(row, 1));
+                    case CASH_AND_EQUIVALENTS -> values.setCashAndEquivalents(CalculateTools.cellValue(row, 1));
+                    case EQUITIES -> values.setEquities(CalculateTools.cellValue(row, 1));
+                    case INITIAL_CAPITAL -> values.setInitialCapital(CalculateTools.cellValue(row, 1));
+                    case TOTAL_ASSETS -> values.setTotalAssets(CalculateTools.cellValue(row, 1));
+                    case TOTAL_LONG_TERM_LIABILITIES -> values.setTotalLongTermLiabilities(CalculateTools.cellValue(row, 1));
+                    case TOTAL_SHORT_TERM_LIABILITIES -> values.setTotalShortTermLiabilities(CalculateTools.cellValue(row, 1));
+                    case FINANCIAL_INVESTMENTS -> {
+                        BigDecimal value = CalculateTools.cellValue(row, 1);
+                        if (Objects.isNull(values.getFinancialInvestments())) {
+                            values.setFinancialInvestments(value);
+                        } else {
+                            values.setFinancialInvestments(values.getFinancialInvestments().add(CalculateTools.cellValue(row, 1)));
                         }
                     }
-                    case Constants.EQUITIES -> values.setEquities(CalculateTools.cellValue(row, 1));
-                    case Constants.INITIAL_CAPITAL -> values.setInitialCapital(CalculateTools.cellValue(row, 1));
-                    case Constants.TOTAL_ASSETS -> values.setTotalAssets(CalculateTools.cellValue(row, 1));
-                    case Constants.TOTAL_LONG_TERM_LIABILITIES ->
-                            values.setTotalLongTermLiabilities(CalculateTools.cellValue(row, 1));
-                    case Constants.TOTAL_SHORT_TERM_LIABILITIES ->
-                            values.setTotalShortTermLiabilities(CalculateTools.cellValue(row, 1));
+                    case FINANCIAL_LIABILITIES -> {
+                        if (Objects.isNull(values.getShortTermFinancialDebts())) {
+                            values.setShortTermFinancialDebts(CalculateTools.cellValue(row, 1));
+                        } else {
+                            values.setLongTermFinancialDebts(CalculateTools.cellValue(row, 1));
+                        }
+                    }
+
                     default -> {
-                        // no need to any operation
+                        // no need to do anything.
                     }
                 }
             }
-        }
+        });
     }
 
     private void annualProfitSheetParser(FinancialValues values, XSSFSheet annualProfitSheet) {
-        for (int i = 0; i < annualProfitSheet.getPhysicalNumberOfRows(); i++) {
-            Row row = annualProfitSheet.getRow(i);
+
+        Iterator<Row> iterator = annualProfitSheet.rowIterator();
+        iterator.next(); // skip header row.
+        iterator.forEachRemaining(row -> {
+
             if (row.getCell(0) != null) {
                 switch (row.getCell(0).getStringCellValue().trim()) {
-                    case Constants.INCOME_FROM_SALES -> values.setAnnualSales(CalculateTools.cellValue(row, 1));
-                    case Constants.INCOME_FROM_OTHER_FIELDS ->
-                            values.setIncomeFromOtherFields(CalculateTools.cellValue(row, 1));
-                    case Constants.GROSS_PROFIT -> values.setAnnualGrossProfit(CalculateTools.cellValue(row, 1));
-                    case Constants.ADMINISTRATIVE_EXPENSES ->
-                            values.setAdministrativeExpenses(CalculateTools.cellValue(row, 1));
-                    case Constants.MARKETING_SALES_DISTRIBUTION_EXPENSES ->
-                            values.setMarketingSalesDistributionExpenses(CalculateTools.cellValue(row, 1));
-                    case Constants.RESEARCH_DEVELOPMENT_EXPENSES ->
-                            values.setResearchDevelopmentExpenses(CalculateTools.cellValue(row, 1));
-                    case Constants.PARENT_COMPANY_SHARES -> {
+                    case INCOME_FROM_OTHER_FIELDS -> values.setIncomeFromOtherFields(CalculateTools.cellValue(row, 1));
+                    case GROSS_PROFIT -> values.setAnnualGrossProfit(CalculateTools.cellValue(row, 1));
+                    case ADMINISTRATIVE_EXPENSES -> values.setAdministrativeExpenses(CalculateTools.cellValue(row, 1));
+                    case MARKETING_SALES_DISTRIBUTION_EXPENSES -> values.setMarketingSalesDistributionExpenses(CalculateTools.cellValue(row, 1));
+                    case RESEARCH_DEVELOPMENT_EXPENSES -> values.setResearchDevelopmentExpenses(CalculateTools.cellValue(row, 1));
+                    case AMORTIZATION -> values.setAmortization(CalculateTools.cellValue(row, 1));
+                    case PARENT_COMPANY_SHARES -> {
                         values.setAnnualNetProfit(CalculateTools.cellValue(row, 1));
                         values.setPrevYearNetProfit(CalculateTools.cellValue(row, 5));
                     }
-                    case Constants.AMORTIZATION -> values.setAmortization(CalculateTools.cellValue(row, 1));
                     default -> {
-                        // no need to any operation
+                        // no need to do anything.
                     }
                 }
             }
-        }
-
+        });
     }
 }
