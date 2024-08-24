@@ -26,7 +26,6 @@ import org.springframework.util.ResourceUtils;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigDecimal;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.MessageFormat;
@@ -184,9 +183,8 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                     case TOTAL_LONG_TERM_LIABILITIES -> values.setTotalLongTermLiabilities(CalculateTools.cellValue(row, 1));
                     case TOTAL_SHORT_TERM_LIABILITIES -> values.setTotalShortTermLiabilities(CalculateTools.cellValue(row, 1));
                     case FINANCIAL_INVESTMENTS -> {
-                        BigDecimal value = CalculateTools.cellValue(row, 1);
                         if (Objects.isNull(values.getFinancialInvestments())) {
-                            values.setFinancialInvestments(value);
+                            values.setFinancialInvestments(CalculateTools.cellValue(row, 1));
                         } else {
                             values.setFinancialInvestments(values.getFinancialInvestments().add(CalculateTools.cellValue(row, 1)));
                         }
