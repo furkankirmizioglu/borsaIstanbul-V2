@@ -30,8 +30,8 @@ class CalculateToolsTest {
         valuationInfo.setPrevYearNetProfit(new BigDecimal(5));
         valuationInfo.setNetDebt(BigDecimal.TEN);
         valuationInfo.setTotalAssets(BigDecimal.TEN);
-        valuationInfo.setLongTermLiabilities(BigDecimal.TEN);
-        valuationInfo.setShortTermLiabilities(BigDecimal.TEN);
+        valuationInfo.setTotalLiabilities(BigDecimal.TEN);
+        valuationInfo.setTotalDebt(BigDecimal.TEN);
 
         financialValues = new FinancialValues();
         financialValues.setAdministrativeExpenses(BigDecimal.TEN);
@@ -50,8 +50,8 @@ class CalculateToolsTest {
     }
 
     @Test
-    void leverageRatioTest() {
-        double result = CalculateTools.leverageRatio(valuationInfo);
+    void debtToEquityRatioTest() {
+        double result = CalculateTools.debtToEquityRatio(valuationInfo);
         Assertions.assertEquals(200, result);
     }
 

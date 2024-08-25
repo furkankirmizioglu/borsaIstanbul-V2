@@ -18,7 +18,6 @@ import org.apache.commons.math3.util.Precision;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
@@ -65,13 +64,13 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
             double price;
 
-            ResponseEntity<GetCurrentPriceResponse> getCurrentPriceResponse =
-                    technicalDataService.getCurrentPrice(ticker);
+            try {
+                ResponseEntity<GetCurrentPriceResponse> getCurrentPriceResponse =
+                        technicalDataService.getCurrentPrice(ticker);
 
-            if (getCurrentPriceResponse.getStatusCode().equals(HttpStatus.OK)) {
                 price = Objects.requireNonNull(getCurrentPriceResponse.getBody()).getPrice();
-            } else {
-                throw new StockValuationApiException("99", "Fiyat bilgisi getirilemedi.");
+            } catch (Exception ex) {
+                throw new StockValuationApiException("E999", "Fiyat bilgisi getirilirken bir hata oluştu: " + ex.getMessage());
             }
 
             info.ifPresent(valuationInfo -> responseDataList.add(
@@ -84,7 +83,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                             .pb(CalculateTools.priceToBookRatio(price, valuationInfo))
                             .enterpriseValueToEbitda(CalculateTools.enterpriseValueToEbitda(price, valuationInfo))
                             .netDebtToEbitda(CalculateTools.netDebtToEbitda(valuationInfo))
-                            .leverage(CalculateTools.leverageRatio(valuationInfo))
+                            .debtToEquity(CalculateTools.debtToEquityRatio(valuationInfo))
                             .build()));
 
             log.info("{} için değerleme işlemi tamamlandı.", ticker);
@@ -148,7 +147,6 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
         ValuationInfo entity = new ValuationInfo();
         entity.setAnnualEbitda(CalculateTools.ebitda(values));
-
         entity.setBalanceSheetTerm(balanceSheet.getRow(0).getCell(1).getStringCellValue());
         entity.setEquity(values.getEquities());
         entity.setInitialCapital(values.getInitialCapital());
@@ -158,8 +156,8 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         entity.setAnnualNetProfit(values.getAnnualNetProfit());
         entity.setTicker(ticker);
         entity.setTotalAssets(values.getTotalAssets());
-        entity.setLongTermLiabilities(values.getTotalLongTermLiabilities());
-        entity.setShortTermLiabilities(values.getTotalShortTermLiabilities());
+        entity.setTotalLiabilities(values.getTotalLongTermLiabilities().add(values.getTotalShortTermLiabilities()));
+        entity.setTotalDebt(values.getShortTermFinancialDebts().add(values.getLongTermFinancialDebts()));
         valuationInfoRepository.save(entity);
 
         workbook.close();

@@ -21,9 +21,8 @@ public class CalculateTools {
         return Precision.round(info.getInitialCapital().doubleValue() * price / info.getEquity().doubleValue(), 2);
     }
 
-    public static double leverageRatio(ValuationInfo info) {
-        BigDecimal totalLiabilities = info.getLongTermLiabilities().add(info.getShortTermLiabilities());
-        return Precision.round(totalLiabilities.doubleValue() / info.getTotalAssets().doubleValue() * 100, 2);
+    public static double debtToEquityRatio(ValuationInfo info) {
+        return Precision.round(info.getTotalDebt().doubleValue() / info.getEquity().doubleValue() * 100, 2);
     }
 
     public static BigDecimal cellValue(Row row, int i) {

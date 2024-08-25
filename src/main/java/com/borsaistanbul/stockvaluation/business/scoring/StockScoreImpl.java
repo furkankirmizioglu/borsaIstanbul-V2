@@ -34,7 +34,12 @@ public class StockScoreImpl implements StockScore {
     // Scoring based on Enterprise Value / EBITDA ratio.
     public void enterpriseValueToEbitdaScore(List<ResponseData> resultList) {
         resultList.sort(Comparator.comparing(ResponseData::getEnterpriseValueToEbitda));
-        resultList.forEach(x -> x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x))));
+        resultList.forEach(x ->
+        {
+            if (x.getEnterpriseValueToEbitda() < 40) {
+                x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x)));
+            }
+        });
     }
 
     // Scoring based on Net Debt / EBITDA ratio.
@@ -44,8 +49,8 @@ public class StockScoreImpl implements StockScore {
     }
 
     // Scoring based on Debt/Equity ratio.
-    public void debtToEquityScore(List<ResponseData> resultList) {
-        resultList.sort(Comparator.comparing(ResponseData::getLeverage));
+    public void debtToEquity(List<ResponseData> resultList) {
+        resultList.sort(Comparator.comparing(ResponseData::getDebtToEquity));
         resultList.forEach(x -> x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x))));
     }
 
@@ -54,7 +59,7 @@ public class StockScoreImpl implements StockScore {
         pbScore(resultList);
         enterpriseValueToEbitdaScore(resultList);
         netDebtToEbitdaScore(resultList);
-        debtToEquityScore(resultList);
+        debtToEquity(resultList);
 
         // Total score will divide to list size multiply by number of indicators (5) count and index to 100.
         resultList.forEach(x -> {

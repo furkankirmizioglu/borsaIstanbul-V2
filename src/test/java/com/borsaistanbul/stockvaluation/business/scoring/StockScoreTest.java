@@ -33,7 +33,7 @@ class StockScoreTest {
                 .pb(defaultDouble)
                 .enterpriseValueToEbitda(defaultDouble)
                 .netDebtToEbitda(defaultDouble)
-                .leverage(defaultDouble)
+                .debtToEquity(defaultDouble)
                 .finalScore(defaultDouble)
                 .suggestion(TEST)
                 .build();
@@ -47,7 +47,7 @@ class StockScoreTest {
                 .pb(defaultDouble)
                 .enterpriseValueToEbitda(defaultDouble)
                 .netDebtToEbitda(defaultDouble)
-                .leverage(defaultDouble)
+                .debtToEquity(defaultDouble)
                 .finalScore(defaultDouble)
                 .suggestion(TEST)
                 .build();
@@ -61,7 +61,7 @@ class StockScoreTest {
                 .pb(defaultDouble)
                 .enterpriseValueToEbitda(defaultDouble)
                 .netDebtToEbitda(defaultDouble)
-                .leverage(defaultDouble)
+                .debtToEquity(defaultDouble)
                 .finalScore(defaultDouble)
                 .suggestion(TEST)
                 .build();

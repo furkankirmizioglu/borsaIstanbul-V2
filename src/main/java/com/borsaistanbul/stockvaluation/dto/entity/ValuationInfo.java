@@ -48,10 +48,10 @@ public class ValuationInfo {
     @Column(name = "TOTAL_ASSETS")
     private BigDecimal totalAssets;
 
-    @Column(name = "LONG_TERM_LIABILITIES")
-    private BigDecimal longTermLiabilities;
+    @Column(name = "TOTAL_LIABILITIES")
+    private BigDecimal totalLiabilities;
 
-    @Column(name = "SHORT_TERM_LIABILITIES")
-    private BigDecimal shortTermLiabilities;
+    @Column(name = "TOTAL_DEBT")
+    private BigDecimal totalDebt;
 
 }

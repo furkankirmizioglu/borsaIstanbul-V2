@@ -26,7 +26,7 @@ class ResponseDataTest {
                 .pb(defaultDouble)
                 .enterpriseValueToEbitda(defaultDouble)
                 .netDebtToEbitda(defaultDouble)
-                .leverage(defaultDouble)
+                .debtToEquity(defaultDouble)
                 .finalScore(defaultDouble)
                 .suggestion(TEST)
                 .build();
@@ -39,7 +39,7 @@ class ResponseDataTest {
         responseData.setPb(defaultDouble);
         responseData.setEnterpriseValueToEbitda(defaultDouble);
         responseData.setNetDebtToEbitda(defaultDouble);
-        responseData.setLeverage(defaultDouble);
+        responseData.setDebtToEquity(defaultDouble);
         responseData.setFinalScore(defaultDouble);
         responseData.setSuggestion(TEST);
     }
@@ -53,7 +53,7 @@ class ResponseDataTest {
         assertEquals(defaultDouble, responseData.getPe());
         assertEquals(defaultDouble, responseData.getPb());
         assertEquals(defaultDouble, responseData.getEnterpriseValueToEbitda());
-        assertEquals(defaultDouble, responseData.getLeverage());
+        assertEquals(defaultDouble, responseData.getDebtToEquity());
         assertEquals(defaultDouble, responseData.getNetDebtToEbitda());
         assertEquals(TEST, responseData.getSuggestion());
     }
