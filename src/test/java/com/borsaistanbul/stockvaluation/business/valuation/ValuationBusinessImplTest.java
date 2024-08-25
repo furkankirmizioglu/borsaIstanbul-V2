@@ -2,6 +2,7 @@ package com.borsaistanbul.stockvaluation.business.valuation;
 
 import com.borsaistanbul.stockvaluation.client.GetCurrentPriceResponse;
 import com.borsaistanbul.stockvaluation.client.TechnicalDataClient;
+import com.borsaistanbul.stockvaluation.dto.entity.CompanyInfo;
 import com.borsaistanbul.stockvaluation.dto.entity.ValuationInfo;
 import com.borsaistanbul.stockvaluation.dto.model.ResponseData;
 import com.borsaistanbul.stockvaluation.repository.CompanyInfoRepository;
@@ -38,7 +39,7 @@ class ValuationBusinessImplTest {
 
     ValuationBusinessImpl valuationBusiness;
     String industry;
-    List<String> tickerList;
+    List<CompanyInfo> companyList;
     ValuationInfo valuationInfo1;
     GetCurrentPriceResponse getCurrentPriceResponse;
 
@@ -48,8 +49,14 @@ class ValuationBusinessImplTest {
         valuationBusiness = new ValuationBusinessImpl(companyInfoRepository, valuationInfoRepository, technicalDataClient);
         industry = "Otomotiv";
 
-        tickerList = new ArrayList<>();
-        tickerList.add("FROTO");
+        companyList = new ArrayList<>();
+
+        CompanyInfo companyInfo = new CompanyInfo();
+        companyInfo.setTicker("FROTO");
+        companyInfo.setIndustry("Otomotiv");
+        companyInfo.setTitle("Ford Otosan");
+
+        companyList.add(companyInfo);
 
         valuationInfo1 = new ValuationInfo();
         valuationInfo1.setGuid(123L);
@@ -63,8 +70,8 @@ class ValuationBusinessImplTest {
         valuationInfo1.setPrevYearNetProfit(new BigDecimal(5));
         valuationInfo1.setNetDebt(BigDecimal.TEN);
         valuationInfo1.setTotalAssets(BigDecimal.TEN);
-        valuationInfo1.setLongTermLiabilities(BigDecimal.TEN);
-        valuationInfo1.setShortTermLiabilities(BigDecimal.TEN);
+        valuationInfo1.setTotalLiabilities(BigDecimal.TEN);
+        valuationInfo1.setTotalDebt(BigDecimal.TEN);
 
         getCurrentPriceResponse = new GetCurrentPriceResponse();
         getCurrentPriceResponse.setPrice(10.0);
@@ -73,9 +80,8 @@ class ValuationBusinessImplTest {
     @Test
     void businessTestValuationInfoFound() {
 
-        when(companyInfoRepository.findTickerByIndustry(anyString())).thenReturn(tickerList);
+        when(companyInfoRepository.findAllByIndustryOrderByTicker(anyString())).thenReturn(companyList);
         when(valuationInfoRepository.findAllByTicker(anyString())).thenReturn(Optional.of(valuationInfo1));
-        when(companyInfoRepository.findCompanyNameByTicker(anyString())).thenReturn("TEST_COMPANY");
         when(technicalDataClient.getCurrentPrice(anyString())).thenReturn(ResponseEntity.ok(getCurrentPriceResponse));
 
         List<ResponseData> responseDataList = valuationBusiness.business(industry);
@@ -88,8 +94,7 @@ class ValuationBusinessImplTest {
     @SneakyThrows
     void businessTestValuationInfoNotFound() {
 
-        when(companyInfoRepository.findTickerByIndustry(anyString())).thenReturn(tickerList);
-        when(companyInfoRepository.findCompanyNameByTicker(anyString())).thenReturn("TEST_COMPANY");
+        when(companyInfoRepository.findAllByIndustryOrderByTicker(anyString())).thenReturn(companyList);
         when(technicalDataClient.getCurrentPrice(anyString())).thenReturn(ResponseEntity.ok(getCurrentPriceResponse));
 
         // TODO -> You have to mock the URL so it shouldn't actually go to FinTables.

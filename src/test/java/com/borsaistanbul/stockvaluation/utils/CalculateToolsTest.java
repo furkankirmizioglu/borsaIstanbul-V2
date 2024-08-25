@@ -41,6 +41,10 @@ class CalculateToolsTest {
         financialValues.setCashAndEquivalents(BigDecimal.TEN);
         financialValues.setFinancialInvestments(BigDecimal.TEN);
         financialValues.setAnnualGrossProfit(BigDecimal.TEN);
+        financialValues.setShortTermFinancialDebts(BigDecimal.TEN);
+        financialValues.setLongTermFinancialDebts(BigDecimal.TEN);
+        financialValues.setCashAndEquivalents(BigDecimal.TWO);
+        financialValues.setFinancialInvestments(BigDecimal.TWO);
     }
 
     @Test
@@ -52,13 +56,13 @@ class CalculateToolsTest {
     @Test
     void debtToEquityRatioTest() {
         double result = CalculateTools.debtToEquityRatio(valuationInfo);
-        Assertions.assertEquals(200, result);
+        Assertions.assertEquals(100, result);
     }
 
     @Test
     void netDebt() {
         BigDecimal result = CalculateTools.netDebt(financialValues);
-        Assertions.assertEquals(new BigDecimal(80), result);
+        Assertions.assertEquals(new BigDecimal(16), result);
     }
     @Test
     void ebitda() {

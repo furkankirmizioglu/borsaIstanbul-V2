@@ -2,6 +2,7 @@ package com.borsaistanbul.stockvaluation.business.valuation;
 
 import com.borsaistanbul.stockvaluation.client.GetCurrentPriceResponse;
 import com.borsaistanbul.stockvaluation.client.TechnicalDataClient;
+import com.borsaistanbul.stockvaluation.dto.entity.CompanyInfo;
 import com.borsaistanbul.stockvaluation.dto.entity.ValuationInfo;
 import com.borsaistanbul.stockvaluation.dto.model.FinancialValues;
 import com.borsaistanbul.stockvaluation.dto.model.ResponseData;
@@ -13,8 +14,6 @@ import com.borsaistanbul.stockvaluation.utils.ResponseCodes;
 import com.borsaistanbul.stockvaluation.utils.Utils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.time.StopWatch;
-import org.apache.commons.math3.util.Precision;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -28,7 +27,10 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
 
 import static com.borsaistanbul.stockvaluation.utils.Constants.*;
 
@@ -44,57 +46,42 @@ public class ValuationBusinessImpl implements ValuationBusiness {
     @Override
     public List<ResponseData> business(String industry) {
 
-        StopWatch stopWatch = new StopWatch();
-        stopWatch.start();
-
         log.info("{} sektörü için değerleme hesaplamaları başladı.", industry);
 
-        List<String> tickerList = companyInfoRepository.findTickerByIndustry(industry);
+        List<CompanyInfo> companies = companyInfoRepository.findAllByIndustryOrderByTicker(industry);
 
         List<ResponseData> responseDataList = new ArrayList<>();
 
-        tickerList.forEach(ticker -> {
+        companies.forEach(company -> {
 
-            String companyName = companyInfoRepository.findCompanyNameByTicker(ticker);
-            Optional<ValuationInfo> info = valuationInfoRepository.findAllByTicker(ticker);
-
-            if (info.isEmpty()) {
-                info = Optional.of(getAndSaveFinancialData(ticker));
-            }
+            ValuationInfo valuationInfo = valuationInfoRepository.findAllByTicker(company.getTicker())
+                    .orElseGet(() -> getAndSaveFinancialData(company.getTicker()));
 
             double price;
 
             try {
-                ResponseEntity<GetCurrentPriceResponse> getCurrentPriceResponse =
-                        technicalDataService.getCurrentPrice(ticker);
 
+                ResponseEntity<GetCurrentPriceResponse> getCurrentPriceResponse = technicalDataService.getCurrentPrice(company.getTicker());
                 price = Objects.requireNonNull(getCurrentPriceResponse.getBody()).getPrice();
+
             } catch (Exception ex) {
                 throw new StockValuationApiException("E999", "Fiyat bilgisi getirilirken bir hata oluştu: " + ex.getMessage());
             }
 
-            info.ifPresent(valuationInfo -> responseDataList.add(
-                    ResponseData.builder()
-                            .price(price)
-                            .companyName(companyName)
-                            .ticker(ticker)
-                            .latestBalanceSheetTerm(valuationInfo.getBalanceSheetTerm())
-                            .pe(CalculateTools.priceToEarnings(price, valuationInfo))
-                            .pb(CalculateTools.priceToBookRatio(price, valuationInfo))
-                            .enterpriseValueToEbitda(CalculateTools.enterpriseValueToEbitda(price, valuationInfo))
-                            .netDebtToEbitda(CalculateTools.netDebtToEbitda(valuationInfo))
-                            .debtToEquity(CalculateTools.debtToEquityRatio(valuationInfo))
-                            .build()));
+            responseDataList.add(ResponseData.builder()
+                    .price(price)
+                    .companyName(company.getTitle())
+                    .ticker(company.getTicker())
+                    .latestBalanceSheetTerm(valuationInfo.getBalanceSheetTerm())
+                    .pe(CalculateTools.priceToEarnings(price, valuationInfo))
+                    .pb(CalculateTools.priceToBookRatio(price, valuationInfo))
+                    .enterpriseValueToEbitda(CalculateTools.enterpriseValueToEbitda(price, valuationInfo))
+                    .netDebtToEbitda(CalculateTools.netDebtToEbitda(valuationInfo))
+                    .debtToEquity(CalculateTools.debtToEquityRatio(valuationInfo))
+                    .build());
 
-            log.info("{} için değerleme işlemi tamamlandı.", ticker);
+            log.info("{} için değerleme işlemi tamamlandı.", company.getTicker());
         });
-
-        stopWatch.stop();
-        log.info("{} sektörü için değerleme hesaplamaları {} saniyede tamamlandı.", industry,
-                Precision.round((float) stopWatch.getTime() / 1000, 2));
-
-        log.info("Hisse başı ortalama hesaplama süresi: {} saniye.",
-                Precision.round((float) stopWatch.getTime() / 1000 / tickerList.size(), 2));
 
         return responseDataList;
     }
@@ -113,7 +100,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
     private static XSSFWorkbook getExcelFile(String ticker) {
         try {
-            URL url = ResourceUtils.toURL(MessageFormat.format(FINTABLES, ticker));
+            URL url = ResourceUtils.toURL(MessageFormat.format("https://fintables.com/sirketler/{0}/finansal-tablolar/excel?currency=TRY", ticker));
             URLConnection uc = url.openConnection();
             uc.addRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0");
             InputStream inputStream = uc.getInputStream();
@@ -172,6 +159,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         Iterator<Row> iterator = balanceSheet.rowIterator();
         iterator.next(); // skip header row.
         iterator.forEachRemaining(row -> {
+
             if (row.getCell(0) != null) {
                 switch (row.getCell(0).getStringCellValue().trim()) {
                     case CASH_AND_EQUIVALENTS -> values.setCashAndEquivalents(CalculateTools.cellValue(row, 1));

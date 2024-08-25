@@ -28,8 +28,8 @@ class ValuationInfoTest {
         valuationInfo.setPrevYearNetProfit(new BigDecimal(5));
         valuationInfo.setNetDebt(BigDecimal.TEN);
         valuationInfo.setTotalAssets(BigDecimal.TEN);
-        valuationInfo.setLongTermLiabilities(BigDecimal.TEN);
-        valuationInfo.setShortTermLiabilities(BigDecimal.TEN);
+        valuationInfo.setTotalLiabilities(BigDecimal.TEN);
+        valuationInfo.setTotalDebt(BigDecimal.TEN);
     }
 
     @Test
@@ -46,8 +46,8 @@ class ValuationInfoTest {
         assertEquals(new BigDecimal(5), valuationInfo.getPrevYearNetProfit());
         assertEquals(BigDecimal.TEN, valuationInfo.getNetDebt());
         assertEquals(BigDecimal.TEN, valuationInfo.getTotalAssets());
-        assertEquals(BigDecimal.TEN, valuationInfo.getLongTermLiabilities());
-        assertEquals(BigDecimal.TEN, valuationInfo.getShortTermLiabilities());
+        assertEquals(BigDecimal.TEN, valuationInfo.getTotalLiabilities());
+        assertEquals(BigDecimal.TEN, valuationInfo.getTotalDebt());
         
     }
 
