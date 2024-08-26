@@ -27,6 +27,10 @@ public class FinancialValues {
     private BigDecimal operationalProfitBeforeTax;
     private BigDecimal operationalTax;
 
+    // FREE CASH FLOW FIELDS.
+    private BigDecimal cashFlowFromOperations;
+    private BigDecimal capex;
+
     private BigDecimal equities;
     private BigDecimal initialCapital;
     private BigDecimal annualNetProfit;
@@ -48,6 +52,8 @@ public class FinancialValues {
         this.annualNetProfit = setIfNullToZero(this.annualNetProfit);
         this.operationalProfitBeforeTax = setIfNullToZero(this.operationalProfitBeforeTax);
         this.operationalTax = setIfNullToZero(this.operationalTax);
+        this.cashFlowFromOperations = setIfNullToZero(this.cashFlowFromOperations);
+        this.capex = setIfNullToZero(this.capex);
     }
 
 

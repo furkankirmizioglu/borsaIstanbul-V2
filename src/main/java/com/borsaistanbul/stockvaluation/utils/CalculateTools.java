@@ -36,6 +36,13 @@ public class CalculateTools {
         return Precision.round(enterpriseValue.doubleValue() / valuationInfo.getAnnualEbitda().doubleValue(), 2);
     }
 
+    public static double freeCashFlowToEnterpriseValue(double price, ValuationInfo info) {
+        BigDecimal enterpriseValue = info.getInitialCapital()
+                .multiply(BigDecimal.valueOf(price))
+                .add(info.getNetDebt());
+        return Precision.round(info.getFreeCashFlow().doubleValue() / enterpriseValue.doubleValue(), 2);
+    }
+
     public static double returnOnEquity(ValuationInfo valuationInfo) {
         return Precision.round(valuationInfo.getAnnualNetProfit().doubleValue() / valuationInfo.getEquity().doubleValue() * 100, 2);
     }

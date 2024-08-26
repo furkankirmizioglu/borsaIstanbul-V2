@@ -79,6 +79,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                     .netDebtToEbitda(CalculateTools.netDebtToEbitda(info))
                     .roe(CalculateTools.returnOnEquity(info))
                     .roic(CalculateTools.roic(info))
+                    .fcfToEv(CalculateTools.freeCashFlowToEnterpriseValue(price, info))
                     .build());
 
             log.info("{} için değerleme işlemi tamamlandı.", company.getTicker());
@@ -125,17 +126,15 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
         FinancialValues values = new FinancialValues();
 
-        XSSFSheet balanceSheet = workbook.getSheetAt(0);
-        XSSFSheet annualProfitSheet = workbook.getSheetAt(3);
-
-        balanceSheetParser(values, balanceSheet);
-        annualProfitSheetParser(values, annualProfitSheet);
+        balanceSheetReader(values, workbook.getSheetAt(0));
+        incomeStatementReader(values, workbook.getSheetAt(3));
+        cashFlowTableReader(values, workbook.getSheetAt(6));
 
         values.nullToZeroConverter();
 
         ValuationInfo entity = new ValuationInfo();
         entity.setAnnualEbitda(CalculateTools.ebitda(values));
-        entity.setBalanceSheetTerm(balanceSheet.getRow(0).getCell(1).getStringCellValue());
+        entity.setBalanceSheetTerm(workbook.getSheetAt(0).getRow(0).getCell(1).getStringCellValue());
         entity.setEquity(values.getEquities());
         entity.setInitialCapital(values.getInitialCapital());
         entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
@@ -144,6 +143,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         entity.setTicker(ticker);
         entity.setNopat(values.getOperationalProfitBeforeTax().subtract(values.getOperationalTax()));
         entity.setInvestedCapital(values.getEquities().add(values.getLongTermFinancialDebts()).add(values.getShortTermFinancialDebts()).subtract(values.getCashAndEquivalents()));
+        entity.setFreeCashFlow(values.getCashFlowFromOperations().subtract(values.getCapex()));
         valuationInfoRepository.save(entity);
 
         workbook.close();
@@ -153,9 +153,9 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         return entity;
     }
 
-    private void balanceSheetParser(FinancialValues values, XSSFSheet balanceSheet) {
+    private void balanceSheetReader(FinancialValues values, XSSFSheet sheet) {
 
-        Iterator<Row> iterator = balanceSheet.rowIterator();
+        Iterator<Row> iterator = sheet.rowIterator();
         iterator.next(); // skip header row.
         iterator.forEachRemaining(row -> {
 
@@ -187,9 +187,9 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         });
     }
 
-    private void annualProfitSheetParser(FinancialValues values, XSSFSheet annualProfitSheet) {
+    private void incomeStatementReader(FinancialValues values, XSSFSheet sheet) {
 
-        Iterator<Row> iterator = annualProfitSheet.rowIterator();
+        Iterator<Row> iterator = sheet.rowIterator();
         iterator.next(); // skip header row.
         iterator.forEachRemaining(row -> {
             if (row.getCell(0) != null) {
@@ -202,6 +202,23 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                     case PARENT_COMPANY_SHARES -> values.setAnnualNetProfit(CalculateTools.cellValue(row, 1));
                     case OPERATIONAL_PROFIT_BEFORE_TAX -> values.setOperationalProfitBeforeTax(CalculateTools.cellValue(row, 1));
                     case TAX_FROM_OPERATIONS -> values.setOperationalTax(CalculateTools.cellValue(row, 1));
+                    default -> {
+                        // no need to do anything.
+                    }
+                }
+            }
+        });
+    }
+
+    private void cashFlowTableReader(FinancialValues values, XSSFSheet sheet) {
+
+        Iterator<Row> iterator = sheet.rowIterator();
+        iterator.next(); // skip header row.
+        iterator.forEachRemaining(row -> {
+            if (row.getCell(0) != null) {
+                switch (row.getCell(0).getStringCellValue().trim()) {
+                    case CASH_FLOW_FROM_OPERATIONS -> values.setCashFlowFromOperations(CalculateTools.cellValue(row, 1));
+                    case CAPITAL_EXPENDITURES -> values.setCapex(CalculateTools.cellValue(row, 1));
                     default -> {
                         // no need to do anything.
                     }

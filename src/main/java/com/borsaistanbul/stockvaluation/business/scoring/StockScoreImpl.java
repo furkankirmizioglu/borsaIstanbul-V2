@@ -60,6 +60,12 @@ public class StockScoreImpl implements StockScore {
         resultList.forEach(x -> x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x))));
     }
 
+    // Scoring based on Free Cash Flow / Enterprise Value ratio.
+    public void fcfToEvScore(List<ResponseData> resultList) {
+        resultList.sort(Comparator.comparing(ResponseData::getFcfToEv).reversed());
+        resultList.forEach(x -> x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x))));
+    }
+
     public List<ResponseData> scoring(List<ResponseData> resultList) {
         peScore(resultList);
         pbScore(resultList);
@@ -67,10 +73,11 @@ public class StockScoreImpl implements StockScore {
         netDebtToEbitdaScore(resultList);
         roeScore(resultList);
         roicScore(resultList);
+        fcfToEvScore(resultList);
 
-        // Total score will divide to list size multiply by number of indicators (6) count and index to 100.
+        // Total score will divide to list size multiply by number of indicators (7) count and index to 100.
         resultList.forEach(x -> {
-            x.setFinalScore(Precision.round(x.getFinalScore() / (resultList.size() * 6) * 100, 0));
+            x.setFinalScore(Precision.round(x.getFinalScore() / (resultList.size() * 7) * 100, 0));
             x.setSuggestion(makeSuggestion(x.getFinalScore()));
         });
 

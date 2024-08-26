@@ -48,4 +48,6 @@ public class ValuationInfo {
     @Column(name = "INVESTED_CAPITAL")
     private BigDecimal investedCapital;
 
+    @Column(name = "FREE_CASH_FLOW")
+    private BigDecimal freeCashFlow;
 }
