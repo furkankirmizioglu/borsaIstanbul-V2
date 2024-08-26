@@ -32,11 +32,11 @@ public class StockScoreImpl implements StockScore {
     }
 
     // Scoring based on Enterprise Value / EBITDA ratio.
-    public void enterpriseValueToEbitdaScore(List<ResponseData> resultList) {
-        resultList.sort(Comparator.comparing(ResponseData::getEnterpriseValueToEbitda));
+    public void evToEbitdaScore(List<ResponseData> resultList) {
+        resultList.sort(Comparator.comparing(ResponseData::getEvToEbitda));
         resultList.forEach(x ->
         {
-            if (x.getEnterpriseValueToEbitda() < 40) {
+            if (x.getEvToEbitda() < 40) {
                 x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x)));
             }
         });
@@ -48,22 +48,29 @@ public class StockScoreImpl implements StockScore {
         resultList.forEach(x -> x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x))));
     }
 
-    // Scoring based on Debt/Equity ratio.
-    public void debtToEquity(List<ResponseData> resultList) {
-        resultList.sort(Comparator.comparing(ResponseData::getDebtToEquity));
+    // Scoring based on Annual Net Profit/Equity ratio.
+    public void roeScore(List<ResponseData> resultList) {
+        resultList.sort(Comparator.comparing(ResponseData::getRoe).reversed());
+        resultList.forEach(x -> x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x))));
+    }
+
+    // Scoring based on NOPAT / Invested Capital ratio.
+    public void roicScore(List<ResponseData> resultList) {
+        resultList.sort(Comparator.comparing(ResponseData::getRoic).reversed());
         resultList.forEach(x -> x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x))));
     }
 
     public List<ResponseData> scoring(List<ResponseData> resultList) {
         peScore(resultList);
         pbScore(resultList);
-        enterpriseValueToEbitdaScore(resultList);
+        evToEbitdaScore(resultList);
         netDebtToEbitdaScore(resultList);
-        debtToEquity(resultList);
+        roeScore(resultList);
+        roicScore(resultList);
 
-        // Total score will divide to list size multiply by number of indicators (5) count and index to 100.
+        // Total score will divide to list size multiply by number of indicators (6) count and index to 100.
         resultList.forEach(x -> {
-            x.setFinalScore(Precision.round(x.getFinalScore() / (resultList.size() * 5) * 100, 0));
+            x.setFinalScore(Precision.round(x.getFinalScore() / (resultList.size() * 6) * 100, 0));
             x.setSuggestion(makeSuggestion(x.getFinalScore()));
         });
 

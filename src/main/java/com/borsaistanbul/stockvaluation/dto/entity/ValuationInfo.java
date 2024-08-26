@@ -39,19 +39,13 @@ public class ValuationInfo {
     @Column(name = "ANNUAL_NET_PROFIT")
     private BigDecimal annualNetProfit;
 
-    @Column(name = "PREV_YEAR_NET_PROFIT")
-    private BigDecimal prevYearNetProfit;
-
     @Column(name = "NET_DEBT")
     private BigDecimal netDebt;
 
-    @Column(name = "TOTAL_ASSETS")
-    private BigDecimal totalAssets;
+    @Column(name = "NOPAT")
+    private BigDecimal nopat;
 
-    @Column(name = "TOTAL_LIABILITIES")
-    private BigDecimal totalLiabilities;
-
-    @Column(name = "TOTAL_DEBT")
-    private BigDecimal totalDebt;
+    @Column(name = "INVESTED_CAPITAL")
+    private BigDecimal investedCapital;
 
 }

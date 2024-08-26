@@ -12,7 +12,7 @@ class ResponseDataTest {
 
     private ResponseData responseData;
     private static final String TEST = "TEST";
-    private static final double defaultDouble = 10.0;
+    private static final double DEFAULT_DOUBLE = 10.0;
 
     @BeforeEach
     void init() {
@@ -21,26 +21,24 @@ class ResponseDataTest {
                 .ticker(TEST)
                 .companyName(TEST)
                 .latestBalanceSheetTerm(TEST)
-                .price(defaultDouble)
-                .pe(defaultDouble)
-                .pb(defaultDouble)
-                .enterpriseValueToEbitda(defaultDouble)
-                .netDebtToEbitda(defaultDouble)
-                .debtToEquity(defaultDouble)
-                .finalScore(defaultDouble)
+                .price(DEFAULT_DOUBLE)
+                .pe(DEFAULT_DOUBLE)
+                .pb(DEFAULT_DOUBLE)
+                .evToEbitda(DEFAULT_DOUBLE)
+                .netDebtToEbitda(DEFAULT_DOUBLE)
+                .finalScore(DEFAULT_DOUBLE)
                 .suggestion(TEST)
                 .build();
 
         responseData.setTicker(TEST);
         responseData.setCompanyName(TEST);
         responseData.setLatestBalanceSheetTerm(TEST);
-        responseData.setPrice(defaultDouble);
-        responseData.setPe(defaultDouble);
-        responseData.setPb(defaultDouble);
-        responseData.setEnterpriseValueToEbitda(defaultDouble);
-        responseData.setNetDebtToEbitda(defaultDouble);
-        responseData.setDebtToEquity(defaultDouble);
-        responseData.setFinalScore(defaultDouble);
+        responseData.setPrice(DEFAULT_DOUBLE);
+        responseData.setPe(DEFAULT_DOUBLE);
+        responseData.setPb(DEFAULT_DOUBLE);
+        responseData.setEvToEbitda(DEFAULT_DOUBLE);
+        responseData.setNetDebtToEbitda(DEFAULT_DOUBLE);
+        responseData.setFinalScore(DEFAULT_DOUBLE);
         responseData.setSuggestion(TEST);
     }
 
@@ -49,12 +47,11 @@ class ResponseDataTest {
         assertEquals(TEST, responseData.getTicker());
         assertEquals(TEST, responseData.getCompanyName());
         assertEquals(TEST, responseData.getLatestBalanceSheetTerm());
-        assertEquals(defaultDouble, responseData.getPrice());
-        assertEquals(defaultDouble, responseData.getPe());
-        assertEquals(defaultDouble, responseData.getPb());
-        assertEquals(defaultDouble, responseData.getEnterpriseValueToEbitda());
-        assertEquals(defaultDouble, responseData.getDebtToEquity());
-        assertEquals(defaultDouble, responseData.getNetDebtToEbitda());
+        assertEquals(DEFAULT_DOUBLE, responseData.getPrice());
+        assertEquals(DEFAULT_DOUBLE, responseData.getPe());
+        assertEquals(DEFAULT_DOUBLE, responseData.getPb());
+        assertEquals(DEFAULT_DOUBLE, responseData.getEvToEbitda());
+        assertEquals(DEFAULT_DOUBLE, responseData.getNetDebtToEbitda());
         assertEquals(TEST, responseData.getSuggestion());
     }
 

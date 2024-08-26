@@ -10,25 +10,27 @@ import java.util.Objects;
 @Setter
 public class FinancialValues {
 
+    // NET DEBT FIELDS.
     private BigDecimal cashAndEquivalents;
     private BigDecimal financialInvestments;
     private BigDecimal shortTermFinancialDebts;
     private BigDecimal longTermFinancialDebts;
+
+    // EBITDA FIELDS.
     private BigDecimal annualGrossProfit;
     private BigDecimal administrativeExpenses;
     private BigDecimal marketingSalesDistributionExpenses;
     private BigDecimal researchDevelopmentExpenses;
     private BigDecimal amortization;
 
+    // NOPAT FIELDS.
+    private BigDecimal operationalProfitBeforeTax;
+    private BigDecimal operationalTax;
+
     private BigDecimal equities;
     private BigDecimal initialCapital;
-    private BigDecimal totalAssets;
-    private BigDecimal totalShortTermLiabilities;
-    private BigDecimal totalLongTermLiabilities;
-
-    private BigDecimal incomeFromOtherFields;
     private BigDecimal annualNetProfit;
-    private BigDecimal prevYearNetProfit;
+
 
     public void nullToZeroConverter() {
 
@@ -43,12 +45,9 @@ public class FinancialValues {
         this.amortization = setIfNullToZero(this.amortization);
         this.equities = setIfNullToZero(this.equities);
         this.initialCapital = setIfNullToZero(this.initialCapital);
-        this.totalAssets = setIfNullToZero(this.totalAssets);
-        this.totalShortTermLiabilities = setIfNullToZero(this.totalShortTermLiabilities);
-        this.totalLongTermLiabilities = setIfNullToZero(this.totalLongTermLiabilities);
-        this.incomeFromOtherFields = setIfNullToZero(this.incomeFromOtherFields);
         this.annualNetProfit = setIfNullToZero(this.annualNetProfit);
-        this.prevYearNetProfit = setIfNullToZero(this.prevYearNetProfit);
+        this.operationalProfitBeforeTax = setIfNullToZero(this.operationalProfitBeforeTax);
+        this.operationalTax = setIfNullToZero(this.operationalTax);
     }
 
 

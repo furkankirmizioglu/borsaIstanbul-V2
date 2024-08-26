@@ -17,7 +17,7 @@ class StockScoreTest {
     private StockScoreImpl stockScore;
     private List<ResponseData> responseDataList;
     private static final String TEST = "TEST";
-    private static final double defaultDouble = 10.0;
+    private static final double DEFAULT_DOUBLE = 10.0;
 
     @BeforeEach
     void init() {
@@ -28,13 +28,12 @@ class StockScoreTest {
                 .ticker(TEST)
                 .companyName(TEST)
                 .latestBalanceSheetTerm(TEST)
-                .price(defaultDouble)
-                .pe(defaultDouble)
-                .pb(defaultDouble)
-                .enterpriseValueToEbitda(defaultDouble)
-                .netDebtToEbitda(defaultDouble)
-                .debtToEquity(defaultDouble)
-                .finalScore(defaultDouble)
+                .price(DEFAULT_DOUBLE)
+                .pe(DEFAULT_DOUBLE)
+                .pb(DEFAULT_DOUBLE)
+                .evToEbitda(DEFAULT_DOUBLE)
+                .netDebtToEbitda(DEFAULT_DOUBLE)
+                .finalScore(DEFAULT_DOUBLE)
                 .suggestion(TEST)
                 .build();
 
@@ -42,13 +41,12 @@ class StockScoreTest {
                 .ticker(TEST)
                 .companyName(TEST)
                 .latestBalanceSheetTerm(TEST)
-                .price(defaultDouble)
-                .pe(defaultDouble)
-                .pb(defaultDouble)
-                .enterpriseValueToEbitda(defaultDouble)
-                .netDebtToEbitda(defaultDouble)
-                .debtToEquity(defaultDouble)
-                .finalScore(defaultDouble)
+                .price(DEFAULT_DOUBLE)
+                .pe(DEFAULT_DOUBLE)
+                .pb(DEFAULT_DOUBLE)
+                .evToEbitda(DEFAULT_DOUBLE)
+                .netDebtToEbitda(DEFAULT_DOUBLE)
+                .finalScore(DEFAULT_DOUBLE)
                 .suggestion(TEST)
                 .build();
 
@@ -56,13 +54,12 @@ class StockScoreTest {
                 .ticker(TEST)
                 .companyName(TEST)
                 .latestBalanceSheetTerm(TEST)
-                .price(defaultDouble)
-                .pe(defaultDouble)
-                .pb(defaultDouble)
-                .enterpriseValueToEbitda(defaultDouble)
-                .netDebtToEbitda(defaultDouble)
-                .debtToEquity(defaultDouble)
-                .finalScore(defaultDouble)
+                .price(DEFAULT_DOUBLE)
+                .pe(DEFAULT_DOUBLE)
+                .pb(DEFAULT_DOUBLE)
+                .evToEbitda(DEFAULT_DOUBLE)
+                .netDebtToEbitda(DEFAULT_DOUBLE)
+                .finalScore(DEFAULT_DOUBLE)
                 .suggestion(TEST)
                 .build();
 

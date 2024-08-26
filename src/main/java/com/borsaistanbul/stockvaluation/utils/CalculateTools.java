@@ -11,6 +11,10 @@ import java.math.BigDecimal;
 @UtilityClass
 public class CalculateTools {
 
+    public static BigDecimal cellValue(Row row, int i) {
+        return (row.getCell(i) != null) ? BigDecimal.valueOf(row.getCell(i).getNumericCellValue()) : BigDecimal.ZERO;
+    }
+
     public static double priceToEarnings(double price, ValuationInfo info) {
         double currentEPS = info.getAnnualNetProfit().doubleValue() / info.getInitialCapital().doubleValue();
         double pe = Precision.round(price / currentEPS, 2);
@@ -21,14 +25,6 @@ public class CalculateTools {
         return Precision.round(info.getInitialCapital().doubleValue() * price / info.getEquity().doubleValue(), 2);
     }
 
-    public static double debtToEquityRatio(ValuationInfo info) {
-        return Precision.round(info.getTotalDebt().doubleValue() / info.getEquity().doubleValue() * 100, 2);
-    }
-
-    public static BigDecimal cellValue(Row row, int i) {
-        return (row.getCell(i) != null) ? BigDecimal.valueOf(row.getCell(i).getNumericCellValue()) : BigDecimal.ZERO;
-    }
-
     public static double netDebtToEbitda(ValuationInfo valuationInfo) {
         return Precision.round(valuationInfo.getNetDebt().doubleValue() / valuationInfo.getAnnualEbitda().doubleValue(), 2);
     }
@@ -37,8 +33,15 @@ public class CalculateTools {
         BigDecimal enterpriseValue = valuationInfo.getInitialCapital()
                 .multiply(BigDecimal.valueOf(price))
                 .add(valuationInfo.getNetDebt());
-
         return Precision.round(enterpriseValue.doubleValue() / valuationInfo.getAnnualEbitda().doubleValue(), 2);
+    }
+
+    public static double returnOnEquity(ValuationInfo valuationInfo) {
+        return Precision.round(valuationInfo.getAnnualNetProfit().doubleValue() / valuationInfo.getEquity().doubleValue() * 100, 2);
+    }
+
+    public static double roic(ValuationInfo info) {
+        return Precision.round(info.getNopat().doubleValue() / info.getInvestedCapital().doubleValue() * 100, 2);
     }
 
     // =============== PARSING BALANCE SHEET UTILITY FUNCTIONS ==================

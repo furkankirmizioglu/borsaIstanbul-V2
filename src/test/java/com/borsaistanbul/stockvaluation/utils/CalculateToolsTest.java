@@ -27,11 +27,7 @@ class CalculateToolsTest {
         valuationInfo.setInitialCapital(BigDecimal.TEN);
         valuationInfo.setAnnualEbitda(BigDecimal.TEN);
         valuationInfo.setAnnualNetProfit(BigDecimal.TEN);
-        valuationInfo.setPrevYearNetProfit(new BigDecimal(5));
         valuationInfo.setNetDebt(BigDecimal.TEN);
-        valuationInfo.setTotalAssets(BigDecimal.TEN);
-        valuationInfo.setTotalLiabilities(BigDecimal.TEN);
-        valuationInfo.setTotalDebt(BigDecimal.TEN);
 
         financialValues = new FinancialValues();
         financialValues.setAdministrativeExpenses(BigDecimal.TEN);
@@ -51,12 +47,6 @@ class CalculateToolsTest {
     void priceToEarningsTest() {
         double pe = CalculateTools.priceToEarnings(10.0, valuationInfo);
         Assertions.assertEquals(10, pe);
-    }
-
-    @Test
-    void debtToEquityRatioTest() {
-        double result = CalculateTools.debtToEquityRatio(valuationInfo);
-        Assertions.assertEquals(100, result);
     }
 
     @Test

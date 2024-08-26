@@ -67,11 +67,9 @@ class ValuationBusinessImplTest {
         valuationInfo1.setInitialCapital(BigDecimal.TEN);
         valuationInfo1.setAnnualEbitda(BigDecimal.TEN);
         valuationInfo1.setAnnualNetProfit(BigDecimal.TEN);
-        valuationInfo1.setPrevYearNetProfit(new BigDecimal(5));
         valuationInfo1.setNetDebt(BigDecimal.TEN);
-        valuationInfo1.setTotalAssets(BigDecimal.TEN);
-        valuationInfo1.setTotalLiabilities(BigDecimal.TEN);
-        valuationInfo1.setTotalDebt(BigDecimal.TEN);
+        valuationInfo1.setNopat(BigDecimal.TEN);
+        valuationInfo1.setInvestedCapital(BigDecimal.TEN);
 
         getCurrentPriceResponse = new GetCurrentPriceResponse();
         getCurrentPriceResponse.setPrice(10.0);

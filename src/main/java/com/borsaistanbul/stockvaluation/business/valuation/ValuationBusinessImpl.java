@@ -54,7 +54,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
         companies.forEach(company -> {
 
-            ValuationInfo valuationInfo = valuationInfoRepository.findAllByTicker(company.getTicker())
+            ValuationInfo info = valuationInfoRepository.findAllByTicker(company.getTicker())
                     .orElseGet(() -> getAndSaveFinancialData(company.getTicker()));
 
             double price;
@@ -72,12 +72,13 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                     .price(price)
                     .companyName(company.getTitle())
                     .ticker(company.getTicker())
-                    .latestBalanceSheetTerm(valuationInfo.getBalanceSheetTerm())
-                    .pe(CalculateTools.priceToEarnings(price, valuationInfo))
-                    .pb(CalculateTools.priceToBookRatio(price, valuationInfo))
-                    .enterpriseValueToEbitda(CalculateTools.enterpriseValueToEbitda(price, valuationInfo))
-                    .netDebtToEbitda(CalculateTools.netDebtToEbitda(valuationInfo))
-                    .debtToEquity(CalculateTools.debtToEquityRatio(valuationInfo))
+                    .latestBalanceSheetTerm(info.getBalanceSheetTerm())
+                    .pe(CalculateTools.priceToEarnings(price, info))
+                    .pb(CalculateTools.priceToBookRatio(price, info))
+                    .evToEbitda(CalculateTools.enterpriseValueToEbitda(price, info))
+                    .netDebtToEbitda(CalculateTools.netDebtToEbitda(info))
+                    .roe(CalculateTools.returnOnEquity(info))
+                    .roic(CalculateTools.roic(info))
                     .build());
 
             log.info("{} için değerleme işlemi tamamlandı.", company.getTicker());
@@ -100,7 +101,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
     private static XSSFWorkbook getExcelFile(String ticker) {
         try {
-            URL url = ResourceUtils.toURL(MessageFormat.format("https://fintables.com/sirketler/{0}/finansal-tablolar/excel?currency=TRY", ticker));
+            URL url = ResourceUtils.toURL(MessageFormat.format(FINTABLES, ticker));
             URLConnection uc = url.openConnection();
             uc.addRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0");
             InputStream inputStream = uc.getInputStream();
@@ -139,12 +140,10 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         entity.setInitialCapital(values.getInitialCapital());
         entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
         entity.setNetDebt(CalculateTools.netDebt(values));
-        entity.setPrevYearNetProfit(values.getPrevYearNetProfit());
         entity.setAnnualNetProfit(values.getAnnualNetProfit());
         entity.setTicker(ticker);
-        entity.setTotalAssets(values.getTotalAssets());
-        entity.setTotalLiabilities(values.getTotalLongTermLiabilities().add(values.getTotalShortTermLiabilities()));
-        entity.setTotalDebt(values.getShortTermFinancialDebts().add(values.getLongTermFinancialDebts()));
+        entity.setNopat(values.getOperationalProfitBeforeTax().subtract(values.getOperationalTax()));
+        entity.setInvestedCapital(values.getEquities().add(values.getLongTermFinancialDebts()).add(values.getShortTermFinancialDebts()).subtract(values.getCashAndEquivalents()));
         valuationInfoRepository.save(entity);
 
         workbook.close();
@@ -165,9 +164,6 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                     case CASH_AND_EQUIVALENTS -> values.setCashAndEquivalents(CalculateTools.cellValue(row, 1));
                     case EQUITIES -> values.setEquities(CalculateTools.cellValue(row, 1));
                     case INITIAL_CAPITAL -> values.setInitialCapital(CalculateTools.cellValue(row, 1));
-                    case TOTAL_ASSETS -> values.setTotalAssets(CalculateTools.cellValue(row, 1));
-                    case TOTAL_LONG_TERM_LIABILITIES -> values.setTotalLongTermLiabilities(CalculateTools.cellValue(row, 1));
-                    case TOTAL_SHORT_TERM_LIABILITIES -> values.setTotalShortTermLiabilities(CalculateTools.cellValue(row, 1));
                     case FINANCIAL_INVESTMENTS -> {
                         if (Objects.isNull(values.getFinancialInvestments())) {
                             values.setFinancialInvestments(CalculateTools.cellValue(row, 1));
@@ -196,19 +192,16 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         Iterator<Row> iterator = annualProfitSheet.rowIterator();
         iterator.next(); // skip header row.
         iterator.forEachRemaining(row -> {
-
             if (row.getCell(0) != null) {
                 switch (row.getCell(0).getStringCellValue().trim()) {
-                    case INCOME_FROM_OTHER_FIELDS -> values.setIncomeFromOtherFields(CalculateTools.cellValue(row, 1));
                     case GROSS_PROFIT -> values.setAnnualGrossProfit(CalculateTools.cellValue(row, 1));
                     case ADMINISTRATIVE_EXPENSES -> values.setAdministrativeExpenses(CalculateTools.cellValue(row, 1));
                     case MARKETING_SALES_DISTRIBUTION_EXPENSES -> values.setMarketingSalesDistributionExpenses(CalculateTools.cellValue(row, 1));
                     case RESEARCH_DEVELOPMENT_EXPENSES -> values.setResearchDevelopmentExpenses(CalculateTools.cellValue(row, 1));
                     case AMORTIZATION -> values.setAmortization(CalculateTools.cellValue(row, 1));
-                    case PARENT_COMPANY_SHARES -> {
-                        values.setAnnualNetProfit(CalculateTools.cellValue(row, 1));
-                        values.setPrevYearNetProfit(CalculateTools.cellValue(row, 5));
-                    }
+                    case PARENT_COMPANY_SHARES -> values.setAnnualNetProfit(CalculateTools.cellValue(row, 1));
+                    case OPERATIONAL_PROFIT_BEFORE_TAX -> values.setOperationalProfitBeforeTax(CalculateTools.cellValue(row, 1));
+                    case TAX_FROM_OPERATIONS -> values.setOperationalTax(CalculateTools.cellValue(row, 1));
                     default -> {
                         // no need to do anything.
                     }

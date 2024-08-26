@@ -27,11 +27,7 @@ class FinancialValuesTest {
         financialValues.setAmortization(BigDecimal.TEN);
         financialValues.setEquities(BigDecimal.TEN);
         financialValues.setInitialCapital(BigDecimal.TEN);
-        financialValues.setTotalAssets(BigDecimal.TEN);
-        financialValues.setTotalShortTermLiabilities(BigDecimal.TEN);
-        financialValues.setTotalLongTermLiabilities(BigDecimal.TEN);
         financialValues.setAnnualNetProfit(BigDecimal.TEN);
-        financialValues.setPrevYearNetProfit(BigDecimal.TEN);
     }
 
     @Test
@@ -45,11 +41,7 @@ class FinancialValuesTest {
         assertEquals(BigDecimal.TEN, financialValues.getAmortization());
         assertEquals(BigDecimal.TEN, financialValues.getEquities());
         assertEquals(BigDecimal.TEN, financialValues.getInitialCapital());
-        assertEquals(BigDecimal.TEN, financialValues.getTotalAssets());
-        assertEquals(BigDecimal.TEN, financialValues.getTotalShortTermLiabilities());
-        assertEquals(BigDecimal.TEN, financialValues.getTotalLongTermLiabilities());
         assertEquals(BigDecimal.TEN, financialValues.getAnnualNetProfit());
-        assertEquals(BigDecimal.TEN, financialValues.getPrevYearNetProfit());
     }
 
 }
