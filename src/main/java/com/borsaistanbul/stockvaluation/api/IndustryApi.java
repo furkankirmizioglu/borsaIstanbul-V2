@@ -23,7 +23,6 @@ public class IndustryApi {
             description = "This API returns industry list.",
             operationId = "API1"
     )
-    @CrossOrigin(origins = "http://localhost:3000")
     @GetMapping("/list")
     @ApiResponse(responseCode = "200", description = "Industry list fetched successfully.")
     public ResponseEntity<List<String>> listAll() {

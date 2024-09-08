@@ -1,7 +1,7 @@
 package com.borsaistanbul.stockvaluation.business.scoring;
 
+import com.borsaistanbul.stockvaluation.dto.enums.Suggestion;
 import com.borsaistanbul.stockvaluation.dto.model.ResponseData;
-import com.borsaistanbul.stockvaluation.utils.Constants;
 import org.apache.commons.math3.util.Precision;
 import org.springframework.stereotype.Service;
 
@@ -32,9 +32,14 @@ public class StockScoreImpl implements StockScore {
     }
 
     // Scoring based on Enterprise Value / EBITDA ratio.
-    public void enterpriseValueToEbitdaScore(List<ResponseData> resultList) {
-        resultList.sort(Comparator.comparing(ResponseData::getEnterpriseValueToEbitda));
-        resultList.forEach(x -> x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x))));
+    public void evToEbitdaScore(List<ResponseData> resultList) {
+        resultList.sort(Comparator.comparing(ResponseData::getEvToEbitda));
+        resultList.forEach(x ->
+        {
+            if (x.getEvToEbitda() < 40) {
+                x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x)));
+            }
+        });
     }
 
     // Scoring based on Net Debt / EBITDA ratio.
@@ -43,38 +48,35 @@ public class StockScoreImpl implements StockScore {
         resultList.forEach(x -> x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x))));
     }
 
-    // Scoring based on Debt/Equity ratio.
-    public void debtToEquityScore(List<ResponseData> resultList) {
-        resultList.sort(Comparator.comparing(ResponseData::getDebtToEquity));
-        resultList.forEach(x -> x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x))));
-    }
-
     public List<ResponseData> scoring(List<ResponseData> resultList) {
         peScore(resultList);
         pbScore(resultList);
-        enterpriseValueToEbitdaScore(resultList);
+        evToEbitdaScore(resultList);
         netDebtToEbitdaScore(resultList);
-        debtToEquityScore(resultList);
 
-        // Total score will divide to list size multiply by number of indicators (5) count and index to 100.
+        // Total score will divide to list size multiply by number of indicators (4) count and index to 100.
         resultList.forEach(x -> {
-            x.setFinalScore(Precision.round(x.getFinalScore() / (resultList.size() * 5) * 100, 0));
-
-            if (x.getFinalScore() >= 85) {
-                x.setSuggestion(Constants.STRONG_BUY);
-            } else if (x.getFinalScore() >= 70) {
-                x.setSuggestion(Constants.BUY);
-            } else if (x.getFinalScore() >= 55) {
-                x.setSuggestion(Constants.NEUTRAL);
-            } else if (x.getFinalScore() >= 40) {
-                x.setSuggestion(Constants.SELL);
-            } else {
-                x.setSuggestion(Constants.STRONG_SELL);
-            }
+            x.setFinalScore(Precision.round(x.getFinalScore() / (resultList.size() * 4) * 100, 0));
+            x.setSuggestion(makeSuggestion(x.getFinalScore()));
         });
 
         // Total scores will sort by highest to lowest.
         resultList.sort(Comparator.comparing(ResponseData::getFinalScore).reversed());
         return resultList;
     }
+
+    private String makeSuggestion(double score) {
+        if (score >= 85) {
+            return (Suggestion.STRONG_BUY.label);
+        } else if (score >= 70) {
+            return (Suggestion.BUY.label);
+        } else if (score >= 55) {
+            return (Suggestion.NEUTRAL.label);
+        } else if (score >= 40) {
+            return (Suggestion.SELL.label);
+        } else {
+            return (Suggestion.STRONG_SELL.label);
+        }
+    }
+
 }

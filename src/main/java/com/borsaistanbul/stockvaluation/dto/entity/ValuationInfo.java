@@ -4,8 +4,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.math.BigDecimal;
-
 @Entity
 @Table(name = "VALUATION_INFO")
 @Getter
@@ -28,33 +26,17 @@ public class ValuationInfo {
     private String balanceSheetTerm;
 
     @Column(name = "EQUITY")
-    private BigDecimal equity;
+    private double equity;
 
     @Column(name = "INITIAL_CAPITAL")
-    private BigDecimal initialCapital;
+    private double initialCapital;
 
     @Column(name = "ANNUAL_EBITDA")
-    private BigDecimal annualEbitda;
-
-    @Column(name = "ANNUAL_SALES")
-    private BigDecimal annualSales;
+    private double annualEbitda;
 
     @Column(name = "ANNUAL_NET_PROFIT")
-    private BigDecimal annualNetProfit;
-
-    @Column(name = "PREV_YEAR_NET_PROFIT")
-    private BigDecimal prevYearNetProfit;
+    private double annualNetProfit;
 
     @Column(name = "NET_DEBT")
-    private BigDecimal netDebt;
-
-    @Column(name = "TOTAL_ASSETS")
-    private BigDecimal totalAssets;
-
-    @Column(name = "LONG_TERM_LIABILITIES")
-    private BigDecimal longTermLiabilities;
-
-    @Column(name = "SHORT_TERM_LIABILITIES")
-    private BigDecimal shortTermLiabilities;
-
+    private double netDebt;
 }
