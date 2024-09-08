@@ -4,7 +4,6 @@ import com.borsaistanbul.stockvaluation.client.GetCurrentPriceResponse;
 import com.borsaistanbul.stockvaluation.client.TechnicalDataClient;
 import com.borsaistanbul.stockvaluation.dto.entity.CompanyInfo;
 import com.borsaistanbul.stockvaluation.dto.entity.ValuationInfo;
-import com.borsaistanbul.stockvaluation.dto.model.FinancialValues;
 import com.borsaistanbul.stockvaluation.dto.model.ResponseData;
 import com.borsaistanbul.stockvaluation.exception.StockValuationApiException;
 import com.borsaistanbul.stockvaluation.repository.CompanyInfoRepository;
@@ -14,7 +13,6 @@ import com.borsaistanbul.stockvaluation.utils.ResponseCodes;
 import com.borsaistanbul.stockvaluation.utils.Utils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +26,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
@@ -54,8 +51,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
         companies.forEach(company -> {
 
-            ValuationInfo info = valuationInfoRepository.findAllByTicker(company.getTicker())
-                    .orElseGet(() -> getAndSaveFinancialData(company.getTicker()));
+            ValuationInfo info = valuationInfoRepository.findAllByTicker(company.getTicker()).orElseGet(() -> getAndSaveFinancialData(company.getTicker()));
 
             double price;
 
@@ -77,14 +73,12 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                     .pb(CalculateTools.priceToBookRatio(price, info))
                     .evToEbitda(CalculateTools.enterpriseValueToEbitda(price, info))
                     .netDebtToEbitda(CalculateTools.netDebtToEbitda(info))
-                    .roe(CalculateTools.returnOnEquity(info))
-                    .roic(CalculateTools.roic(info))
-                    .fcfToEv(CalculateTools.freeCashFlowToEnterpriseValue(price, info))
                     .build());
 
             log.info("{} için değerleme işlemi tamamlandı.", company.getTicker());
         });
 
+        log.info("{} sektörü için değerleme hesaplamaları tamamlandı.", industry);
         return responseDataList;
     }
 
@@ -124,106 +118,47 @@ public class ValuationBusinessImpl implements ValuationBusiness {
 
     private ValuationInfo saveValuationInfo(String ticker, XSSFWorkbook workbook) throws IOException {
 
-        FinancialValues values = new FinancialValues();
-
-        balanceSheetReader(values, workbook.getSheetAt(0));
-        incomeStatementReader(values, workbook.getSheetAt(3));
-        cashFlowTableReader(values, workbook.getSheetAt(6));
-
-        values.nullToZeroConverter();
-
         ValuationInfo entity = new ValuationInfo();
-        entity.setAnnualEbitda(CalculateTools.ebitda(values));
+        balanceSheetReader(entity, workbook.getSheetAt(0));
+        incomeStatementReader(entity, workbook.getSheetAt(3));
         entity.setBalanceSheetTerm(workbook.getSheetAt(0).getRow(0).getCell(1).getStringCellValue());
-        entity.setEquity(values.getEquities());
-        entity.setInitialCapital(values.getInitialCapital());
-        entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
-        entity.setNetDebt(CalculateTools.netDebt(values));
-        entity.setAnnualNetProfit(values.getAnnualNetProfit());
         entity.setTicker(ticker);
-        entity.setNopat(values.getOperationalProfitBeforeTax().subtract(values.getOperationalTax()));
-        entity.setInvestedCapital(values.getEquities().add(values.getLongTermFinancialDebts()).add(values.getShortTermFinancialDebts()).subtract(values.getCashAndEquivalents()));
-        entity.setFreeCashFlow(values.getCashFlowFromOperations().subtract(values.getCapex()));
+        entity.setLastUpdated(Utils.getCurrentDateTimeAsLong());
         valuationInfoRepository.save(entity);
-
         workbook.close();
 
         log.info("{} için bilanço başarıyla kaydedildi.", ticker);
-
         return entity;
     }
 
-    private void balanceSheetReader(FinancialValues values, XSSFSheet sheet) {
+    private void balanceSheetReader(ValuationInfo entity, XSSFSheet sheet) {
 
-        Iterator<Row> iterator = sheet.rowIterator();
-        iterator.next(); // skip header row.
-        iterator.forEachRemaining(row -> {
+        double cashAndEquivalents = CalculateTools.getFirstCellValue(sheet.getRow(2));
+        double financialInvestments = CalculateTools.getFirstCellValue(sheet.getRow(4));
+        double shortTermFinancialDebts = CalculateTools.getFirstCellValue(sheet.getRow(49));
+        double longTermFinancialDebts = CalculateTools.getFirstCellValue(sheet.getRow(67));
+        double equities = CalculateTools.getFirstCellValue(sheet.getRow(85));
+        double initialCapital = CalculateTools.getFirstCellValue(sheet.getRow(86));
 
-            if (row.getCell(0) != null) {
-                switch (row.getCell(0).getStringCellValue().trim()) {
-                    case CASH_AND_EQUIVALENTS -> values.setCashAndEquivalents(CalculateTools.cellValue(row, 1));
-                    case EQUITIES -> values.setEquities(CalculateTools.cellValue(row, 1));
-                    case INITIAL_CAPITAL -> values.setInitialCapital(CalculateTools.cellValue(row, 1));
-                    case FINANCIAL_INVESTMENTS -> {
-                        if (Objects.isNull(values.getFinancialInvestments())) {
-                            values.setFinancialInvestments(CalculateTools.cellValue(row, 1));
-                        } else {
-                            values.setFinancialInvestments(values.getFinancialInvestments().add(CalculateTools.cellValue(row, 1)));
-                        }
-                    }
-                    case FINANCIAL_LIABILITIES -> {
-                        if (Objects.isNull(values.getShortTermFinancialDebts())) {
-                            values.setShortTermFinancialDebts(CalculateTools.cellValue(row, 1));
-                        } else {
-                            values.setLongTermFinancialDebts(CalculateTools.cellValue(row, 1));
-                        }
-                    }
+        double netDebt = (longTermFinancialDebts + shortTermFinancialDebts) - (cashAndEquivalents + financialInvestments);
 
-                    default -> {
-                        // no need to do anything.
-                    }
-                }
-            }
-        });
+        entity.setNetDebt(netDebt);
+        entity.setEquity(equities);
+        entity.setInitialCapital(initialCapital);
     }
 
-    private void incomeStatementReader(FinancialValues values, XSSFSheet sheet) {
+    private void incomeStatementReader(ValuationInfo entity, XSSFSheet sheet) {
 
-        Iterator<Row> iterator = sheet.rowIterator();
-        iterator.next(); // skip header row.
-        iterator.forEachRemaining(row -> {
-            if (row.getCell(0) != null) {
-                switch (row.getCell(0).getStringCellValue().trim()) {
-                    case GROSS_PROFIT -> values.setAnnualGrossProfit(CalculateTools.cellValue(row, 1));
-                    case ADMINISTRATIVE_EXPENSES -> values.setAdministrativeExpenses(CalculateTools.cellValue(row, 1));
-                    case MARKETING_SALES_DISTRIBUTION_EXPENSES -> values.setMarketingSalesDistributionExpenses(CalculateTools.cellValue(row, 1));
-                    case RESEARCH_DEVELOPMENT_EXPENSES -> values.setResearchDevelopmentExpenses(CalculateTools.cellValue(row, 1));
-                    case AMORTIZATION -> values.setAmortization(CalculateTools.cellValue(row, 1));
-                    case PARENT_COMPANY_SHARES -> values.setAnnualNetProfit(CalculateTools.cellValue(row, 1));
-                    case OPERATIONAL_PROFIT_BEFORE_TAX -> values.setOperationalProfitBeforeTax(CalculateTools.cellValue(row, 1));
-                    case TAX_FROM_OPERATIONS -> values.setOperationalTax(CalculateTools.cellValue(row, 1));
-                    default -> {
-                        // no need to do anything.
-                    }
-                }
-            }
-        });
-    }
+        double annualGrossProfit = CalculateTools.getFirstCellValue(sheet.getRow(11));
+        double administrativeExpenses = CalculateTools.getFirstCellValue(sheet.getRow(13));
+        double marketingSalesDistributionExpenses = CalculateTools.getFirstCellValue(sheet.getRow(14));
+        double researchDevelopmentExpenses = CalculateTools.getFirstCellValue(sheet.getRow(15));
+        double annualNetProfit = CalculateTools.getFirstCellValue(sheet.getRow(46));
+        double amortization = CalculateTools.getFirstCellValue(sheet.getRow(48));
 
-    private void cashFlowTableReader(FinancialValues values, XSSFSheet sheet) {
+        double ebitda = annualGrossProfit + administrativeExpenses + marketingSalesDistributionExpenses + researchDevelopmentExpenses + amortization;
 
-        Iterator<Row> iterator = sheet.rowIterator();
-        iterator.next(); // skip header row.
-        iterator.forEachRemaining(row -> {
-            if (row.getCell(0) != null) {
-                switch (row.getCell(0).getStringCellValue().trim()) {
-                    case CASH_FLOW_FROM_OPERATIONS -> values.setCashFlowFromOperations(CalculateTools.cellValue(row, 1));
-                    case CAPITAL_EXPENDITURES -> values.setCapex(CalculateTools.cellValue(row, 1));
-                    default -> {
-                        // no need to do anything.
-                    }
-                }
-            }
-        });
+        entity.setAnnualEbitda(ebitda);
+        entity.setAnnualNetProfit(annualNetProfit);
     }
 }

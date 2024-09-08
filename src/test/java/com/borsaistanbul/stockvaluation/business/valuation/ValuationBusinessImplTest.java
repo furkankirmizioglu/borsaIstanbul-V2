@@ -15,7 +15,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -63,13 +62,11 @@ class ValuationBusinessImplTest {
         valuationInfo1.setLastUpdated(20230818L);
         valuationInfo1.setTicker("TEST");
         valuationInfo1.setBalanceSheetTerm("2023/06");
-        valuationInfo1.setEquity(BigDecimal.TEN);
-        valuationInfo1.setInitialCapital(BigDecimal.TEN);
-        valuationInfo1.setAnnualEbitda(BigDecimal.TEN);
-        valuationInfo1.setAnnualNetProfit(BigDecimal.TEN);
-        valuationInfo1.setNetDebt(BigDecimal.TEN);
-        valuationInfo1.setNopat(BigDecimal.TEN);
-        valuationInfo1.setInvestedCapital(BigDecimal.TEN);
+        valuationInfo1.setEquity(10);
+        valuationInfo1.setInitialCapital(10.0);
+        valuationInfo1.setAnnualEbitda(10.0);
+        valuationInfo1.setAnnualNetProfit(10.0);
+        valuationInfo1.setNetDebt(10.0);
 
         getCurrentPriceResponse = new GetCurrentPriceResponse();
         getCurrentPriceResponse.setPrice(10.0);

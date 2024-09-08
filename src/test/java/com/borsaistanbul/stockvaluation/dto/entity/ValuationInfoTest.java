@@ -5,8 +5,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
@@ -21,11 +19,11 @@ class ValuationInfoTest {
         valuationInfo.setLastUpdated(20230818L);
         valuationInfo.setTicker("TEST");
         valuationInfo.setBalanceSheetTerm("2023/06");
-        valuationInfo.setEquity(BigDecimal.TEN);
-        valuationInfo.setInitialCapital(BigDecimal.TEN);
-        valuationInfo.setAnnualEbitda(BigDecimal.TEN);
-        valuationInfo.setAnnualNetProfit(BigDecimal.TEN);
-        valuationInfo.setNetDebt(BigDecimal.TEN);
+        valuationInfo.setEquity(10.0);
+        valuationInfo.setInitialCapital(10.0);
+        valuationInfo.setAnnualEbitda(10.0);
+        valuationInfo.setAnnualNetProfit(10.0);
+        valuationInfo.setNetDebt(10.0);
     }
 
     @Test
@@ -35,11 +33,11 @@ class ValuationInfoTest {
         assertEquals(20230818L, valuationInfo.getLastUpdated());
         assertEquals("TEST", valuationInfo.getTicker());
         assertEquals("2023/06", valuationInfo.getBalanceSheetTerm());
-        assertEquals(BigDecimal.TEN, valuationInfo.getEquity());
-        assertEquals(BigDecimal.TEN, valuationInfo.getInitialCapital());
-        assertEquals(BigDecimal.TEN, valuationInfo.getAnnualEbitda());
-        assertEquals(BigDecimal.TEN, valuationInfo.getAnnualNetProfit());
-        assertEquals(BigDecimal.TEN, valuationInfo.getNetDebt());
+        assertEquals(10.0, valuationInfo.getEquity());
+        assertEquals(10.0, valuationInfo.getInitialCapital());
+        assertEquals(10.0, valuationInfo.getAnnualEbitda());
+        assertEquals(10.0, valuationInfo.getAnnualNetProfit());
+        assertEquals(10.0, valuationInfo.getNetDebt());
         
     }
 

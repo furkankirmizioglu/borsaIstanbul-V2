@@ -16,9 +16,6 @@ public class ResponseData {
     private double pb;
     private double evToEbitda;
     private double netDebtToEbitda;
-    private double roe;
-    private double roic;
-    private double fcfToEv;
     private double finalScore;
     private String suggestion;
 }

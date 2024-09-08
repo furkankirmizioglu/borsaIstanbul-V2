@@ -48,36 +48,15 @@ public class StockScoreImpl implements StockScore {
         resultList.forEach(x -> x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x))));
     }
 
-    // Scoring based on Annual Net Profit/Equity ratio.
-    public void roeScore(List<ResponseData> resultList) {
-        resultList.sort(Comparator.comparing(ResponseData::getRoe).reversed());
-        resultList.forEach(x -> x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x))));
-    }
-
-    // Scoring based on NOPAT / Invested Capital ratio.
-    public void roicScore(List<ResponseData> resultList) {
-        resultList.sort(Comparator.comparing(ResponseData::getRoic).reversed());
-        resultList.forEach(x -> x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x))));
-    }
-
-    // Scoring based on Free Cash Flow / Enterprise Value ratio.
-    public void fcfToEvScore(List<ResponseData> resultList) {
-        resultList.sort(Comparator.comparing(ResponseData::getFcfToEv).reversed());
-        resultList.forEach(x -> x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x))));
-    }
-
     public List<ResponseData> scoring(List<ResponseData> resultList) {
         peScore(resultList);
         pbScore(resultList);
         evToEbitdaScore(resultList);
         netDebtToEbitdaScore(resultList);
-        roeScore(resultList);
-        roicScore(resultList);
-        fcfToEvScore(resultList);
 
-        // Total score will divide to list size multiply by number of indicators (7) count and index to 100.
+        // Total score will divide to list size multiply by number of indicators (4) count and index to 100.
         resultList.forEach(x -> {
-            x.setFinalScore(Precision.round(x.getFinalScore() / (resultList.size() * 7) * 100, 0));
+            x.setFinalScore(Precision.round(x.getFinalScore() / (resultList.size() * 4) * 100, 0));
             x.setSuggestion(makeSuggestion(x.getFinalScore()));
         });
 

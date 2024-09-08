@@ -1,7 +1,6 @@
 package com.borsaistanbul.stockvaluation.utils;
 
 import com.borsaistanbul.stockvaluation.dto.entity.ValuationInfo;
-import com.borsaistanbul.stockvaluation.dto.model.FinancialValues;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.math3.util.Precision;
 import org.apache.poi.ss.usermodel.Row;
@@ -15,57 +14,26 @@ public class CalculateTools {
         return (row.getCell(i) != null) ? BigDecimal.valueOf(row.getCell(i).getNumericCellValue()) : BigDecimal.ZERO;
     }
 
+    public static double getFirstCellValue(Row row) {
+        return (row.getCell(1) != null) ? row.getCell(1).getNumericCellValue() : 0.00;
+    }
+
     public static double priceToEarnings(double price, ValuationInfo info) {
-        double currentEPS = info.getAnnualNetProfit().doubleValue() / info.getInitialCapital().doubleValue();
+        double currentEPS = info.getAnnualNetProfit() / info.getInitialCapital();
         double pe = Precision.round(price / currentEPS, 2);
         return pe > 0 ? pe : Double.NaN;
     }
 
     public static double priceToBookRatio(double price, ValuationInfo info) {
-        return Precision.round(info.getInitialCapital().doubleValue() * price / info.getEquity().doubleValue(), 2);
+        return Precision.round(info.getInitialCapital() * price / info.getEquity(), 2);
     }
 
     public static double netDebtToEbitda(ValuationInfo valuationInfo) {
-        return Precision.round(valuationInfo.getNetDebt().doubleValue() / valuationInfo.getAnnualEbitda().doubleValue(), 2);
+        return Precision.round(valuationInfo.getNetDebt() / valuationInfo.getAnnualEbitda(), 2);
     }
 
     public static double enterpriseValueToEbitda(double price, ValuationInfo valuationInfo) {
-        BigDecimal enterpriseValue = valuationInfo.getInitialCapital()
-                .multiply(BigDecimal.valueOf(price))
-                .add(valuationInfo.getNetDebt());
-        return Precision.round(enterpriseValue.doubleValue() / valuationInfo.getAnnualEbitda().doubleValue(), 2);
-    }
-
-    public static double freeCashFlowToEnterpriseValue(double price, ValuationInfo info) {
-        BigDecimal enterpriseValue = info.getInitialCapital()
-                .multiply(BigDecimal.valueOf(price))
-                .add(info.getNetDebt());
-        return Precision.round(info.getFreeCashFlow().doubleValue() / enterpriseValue.doubleValue(), 2);
-    }
-
-    public static double returnOnEquity(ValuationInfo valuationInfo) {
-        return Precision.round(valuationInfo.getAnnualNetProfit().doubleValue() / valuationInfo.getEquity().doubleValue() * 100, 2);
-    }
-
-    public static double roic(ValuationInfo info) {
-        return Precision.round(info.getNopat().doubleValue() / info.getInvestedCapital().doubleValue() * 100, 2);
-    }
-
-    // =============== PARSING BALANCE SHEET UTILITY FUNCTIONS ==================
-
-    public static BigDecimal ebitda(FinancialValues values) {
-        return values.getAnnualGrossProfit()
-                .add(values.getAdministrativeExpenses())
-                .add(values.getMarketingSalesDistributionExpenses())
-                .add(values.getResearchDevelopmentExpenses())
-                .add(values.getAmortization());
-    }
-
-    public static BigDecimal netDebt(FinancialValues values) {
-        return values.getShortTermFinancialDebts()
-                .add(values.getLongTermFinancialDebts())
-                .subtract(values.getCashAndEquivalents())
-                .subtract(values.getFinancialInvestments());
-
+        double enterpriseValue = valuationInfo.getInitialCapital() * price + valuationInfo.getNetDebt();
+        return Precision.round(enterpriseValue / valuationInfo.getAnnualEbitda(), 2);
     }
 }
