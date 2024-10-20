@@ -11,16 +11,6 @@ import java.util.List;
 @Service
 public class StockScoreImpl implements StockScore {
 
-    // Scoring based on Price/Earnings ratio.
-    public void peScore(List<ResponseData> resultList) {
-        resultList.sort(Comparator.comparing(ResponseData::getPe));
-        resultList.forEach(x -> {
-            if (x.getPe() > 0) {
-                x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x)));
-            }
-        });
-    }
-
     // Scoring based on Price/Book ratio.
     public void pbScore(List<ResponseData> resultList) {
         resultList.sort(Comparator.comparing(ResponseData::getPb));
@@ -48,11 +38,18 @@ public class StockScoreImpl implements StockScore {
         resultList.forEach(x -> x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x))));
     }
 
+    // Scoring based on Net Debt / EBITDA ratio.
+    public void netCashPerShareScore(List<ResponseData> resultList) {
+        resultList.sort(Comparator.comparing(ResponseData::getNetCashPerShare).reversed());
+        resultList.forEach(x -> x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x))));
+    }
+
     public List<ResponseData> scoring(List<ResponseData> resultList) {
-        peScore(resultList);
+
         pbScore(resultList);
         evToEbitdaScore(resultList);
         netDebtToEbitdaScore(resultList);
+        netCashPerShareScore(resultList);
 
         // Total score will divide to list size multiply by number of indicators (4) count and index to 100.
         resultList.forEach(x -> {

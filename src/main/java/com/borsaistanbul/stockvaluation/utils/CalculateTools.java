@@ -5,14 +5,8 @@ import lombok.experimental.UtilityClass;
 import org.apache.commons.math3.util.Precision;
 import org.apache.poi.ss.usermodel.Row;
 
-import java.math.BigDecimal;
-
 @UtilityClass
 public class CalculateTools {
-
-    public static BigDecimal cellValue(Row row, int i) {
-        return (row.getCell(i) != null) ? BigDecimal.valueOf(row.getCell(i).getNumericCellValue()) : BigDecimal.ZERO;
-    }
 
     public static double getFirstCellValue(Row row) {
         return (row.getCell(1) != null) ? row.getCell(1).getNumericCellValue() : 0.00;

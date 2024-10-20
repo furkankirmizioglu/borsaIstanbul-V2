@@ -15,7 +15,7 @@ class CalculateToolsTest {
     @BeforeEach
     void init() {
         valuationInfo = new ValuationInfo();
-        valuationInfo.setGuid(123L);
+        valuationInfo.setId(123L);
         valuationInfo.setLastUpdated(20230818L);
         valuationInfo.setTicker("TEST");
         valuationInfo.setBalanceSheetTerm("2023/06");

@@ -58,7 +58,7 @@ class ValuationBusinessImplTest {
         companyList.add(companyInfo);
 
         valuationInfo1 = new ValuationInfo();
-        valuationInfo1.setGuid(123L);
+        valuationInfo1.setId(123L);
         valuationInfo1.setLastUpdated(20230818L);
         valuationInfo1.setTicker("TEST");
         valuationInfo1.setBalanceSheetTerm("2023/06");

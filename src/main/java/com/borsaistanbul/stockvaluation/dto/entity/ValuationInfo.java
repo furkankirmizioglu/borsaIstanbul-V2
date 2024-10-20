@@ -13,8 +13,8 @@ public class ValuationInfo {
     @Id
     @SequenceGenerator(name = "valuation_seq", sequenceName = "valuation_seq", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "valuation_seq")
-    @Column(name = "GUID")
-    private long guid;
+    @Column(name = "ID")
+    private long id;
 
     @Column(name = "LAST_UPDATED")
     private long lastUpdated;
@@ -39,4 +39,7 @@ public class ValuationInfo {
 
     @Column(name = "NET_DEBT")
     private double netDebt;
+
+    @Column(name = "NET_CASH_PER_SHARE")
+    private double netCashPerShare;
 }

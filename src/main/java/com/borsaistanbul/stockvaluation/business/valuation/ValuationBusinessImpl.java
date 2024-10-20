@@ -13,6 +13,7 @@ import com.borsaistanbul.stockvaluation.utils.ResponseCodes;
 import com.borsaistanbul.stockvaluation.utils.Utils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.math3.util.Precision;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.http.ResponseEntity;
@@ -56,10 +57,8 @@ public class ValuationBusinessImpl implements ValuationBusiness {
             double price;
 
             try {
-
                 ResponseEntity<GetCurrentPriceResponse> getCurrentPriceResponse = technicalDataService.getCurrentPrice(company.getTicker());
                 price = Objects.requireNonNull(getCurrentPriceResponse.getBody()).getPrice();
-
             } catch (Exception ex) {
                 throw new StockValuationApiException("E999", "Fiyat bilgisi getirilirken bir hata oluştu: " + ex.getMessage());
             }
@@ -73,6 +72,7 @@ public class ValuationBusinessImpl implements ValuationBusiness {
                     .pb(CalculateTools.priceToBookRatio(price, info))
                     .evToEbitda(CalculateTools.enterpriseValueToEbitda(price, info))
                     .netDebtToEbitda(CalculateTools.netDebtToEbitda(info))
+                    .netCashPerShare(info.getNetCashPerShare())
                     .build());
 
             log.info("{} için değerleme işlemi tamamlandı.", company.getTicker());
@@ -137,24 +137,27 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         double financialInvestments = CalculateTools.getFirstCellValue(sheet.getRow(4));
         double shortTermFinancialDebts = CalculateTools.getFirstCellValue(sheet.getRow(49));
         double longTermFinancialDebts = CalculateTools.getFirstCellValue(sheet.getRow(67));
+        double totalLongTermLiabilities = CalculateTools.getFirstCellValue(sheet.getRow(83));
         double equities = CalculateTools.getFirstCellValue(sheet.getRow(85));
         double initialCapital = CalculateTools.getFirstCellValue(sheet.getRow(86));
 
         double netDebt = (longTermFinancialDebts + shortTermFinancialDebts) - (cashAndEquivalents + financialInvestments);
+        double netCashPerShare = Precision.round(((cashAndEquivalents - totalLongTermLiabilities) / initialCapital), 2);
 
         entity.setNetDebt(netDebt);
         entity.setEquity(equities);
+        entity.setNetCashPerShare(netCashPerShare);
         entity.setInitialCapital(initialCapital);
     }
 
     private void incomeStatementReader(ValuationInfo entity, XSSFSheet sheet) {
 
-        double annualGrossProfit = CalculateTools.getFirstCellValue(sheet.getRow(11));
-        double administrativeExpenses = CalculateTools.getFirstCellValue(sheet.getRow(13));
-        double marketingSalesDistributionExpenses = CalculateTools.getFirstCellValue(sheet.getRow(14));
-        double researchDevelopmentExpenses = CalculateTools.getFirstCellValue(sheet.getRow(15));
-        double annualNetProfit = CalculateTools.getFirstCellValue(sheet.getRow(46));
-        double amortization = CalculateTools.getFirstCellValue(sheet.getRow(48));
+        double annualGrossProfit = CalculateTools.getFirstCellValue(sheet.getRow(12));
+        double administrativeExpenses = CalculateTools.getFirstCellValue(sheet.getRow(14));
+        double marketingSalesDistributionExpenses = CalculateTools.getFirstCellValue(sheet.getRow(15));
+        double researchDevelopmentExpenses = CalculateTools.getFirstCellValue(sheet.getRow(16));
+        double annualNetProfit = CalculateTools.getFirstCellValue(sheet.getRow(47));
+        double amortization = CalculateTools.getFirstCellValue(sheet.getRow(49));
 
         double ebitda = annualGrossProfit + administrativeExpenses + marketingSalesDistributionExpenses + researchDevelopmentExpenses + amortization;
 
