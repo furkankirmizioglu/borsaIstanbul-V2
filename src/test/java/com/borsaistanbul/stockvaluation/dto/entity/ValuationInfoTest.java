@@ -15,7 +15,7 @@ class ValuationInfoTest {
     @BeforeEach
     void init() {
         valuationInfo = new ValuationInfo();
-        valuationInfo.setGuid(123L);
+        valuationInfo.setId(123L);
         valuationInfo.setLastUpdated(20230818L);
         valuationInfo.setTicker("TEST");
         valuationInfo.setBalanceSheetTerm("2023/06");
@@ -29,7 +29,7 @@ class ValuationInfoTest {
     @Test
     void test() {
 
-        assertEquals(123L, valuationInfo.getGuid());
+        assertEquals(123L, valuationInfo.getId());
         assertEquals(20230818L, valuationInfo.getLastUpdated());
         assertEquals("TEST", valuationInfo.getTicker());
         assertEquals("2023/06", valuationInfo.getBalanceSheetTerm());

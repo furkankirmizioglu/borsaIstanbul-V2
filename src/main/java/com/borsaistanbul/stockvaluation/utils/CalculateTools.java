@@ -5,14 +5,8 @@ import lombok.experimental.UtilityClass;
 import org.apache.commons.math3.util.Precision;
 import org.apache.poi.ss.usermodel.Row;
 
-import java.math.BigDecimal;
-
 @UtilityClass
 public class CalculateTools {
-
-    public static BigDecimal cellValue(Row row, int i) {
-        return (row.getCell(i) != null) ? BigDecimal.valueOf(row.getCell(i).getNumericCellValue()) : BigDecimal.ZERO;
-    }
 
     public static double getFirstCellValue(Row row) {
         return (row.getCell(1) != null) ? row.getCell(1).getNumericCellValue() : 0.00;
@@ -32,8 +26,13 @@ public class CalculateTools {
         return Precision.round(valuationInfo.getNetDebt() / valuationInfo.getAnnualEbitda(), 2);
     }
 
+    public static double netCashPerShare(ValuationInfo info) {
+        return Precision.round(info.getNetCash() / info.getInitialCapital(), 2);
+    }
+
     public static double enterpriseValueToEbitda(double price, ValuationInfo valuationInfo) {
         double enterpriseValue = valuationInfo.getInitialCapital() * price + valuationInfo.getNetDebt();
-        return Precision.round(enterpriseValue / valuationInfo.getAnnualEbitda(), 2);
+        double evToEbitda =  Precision.round(enterpriseValue / valuationInfo.getAnnualEbitda(), 2);
+        return evToEbitda > 0 ? evToEbitda : Double.NaN;
     }
 }
