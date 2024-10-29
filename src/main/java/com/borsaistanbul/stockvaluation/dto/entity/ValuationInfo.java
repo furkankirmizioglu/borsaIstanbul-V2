@@ -40,6 +40,6 @@ public class ValuationInfo {
     @Column(name = "NET_DEBT")
     private double netDebt;
 
-    @Column(name = "NET_CASH_PER_SHARE")
-    private double netCashPerShare;
+    @Column(name = "NET_CASH")
+    private double netCash;
 }

@@ -24,9 +24,8 @@ public class StockScoreImpl implements StockScore {
     // Scoring based on Enterprise Value / EBITDA ratio.
     public void evToEbitdaScore(List<ResponseData> resultList) {
         resultList.sort(Comparator.comparing(ResponseData::getEvToEbitda));
-        resultList.forEach(x ->
-        {
-            if (x.getEvToEbitda() < 40) {
+        resultList.forEach(x -> {
+            if (!Double.isNaN(x.getEvToEbitda())) {
                 x.setFinalScore(x.getFinalScore() + (resultList.size() - resultList.indexOf(x)));
             }
         });

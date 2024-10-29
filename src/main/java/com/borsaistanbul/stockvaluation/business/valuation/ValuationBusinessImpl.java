@@ -59,22 +59,21 @@ public class ValuationBusinessImpl implements ValuationBusiness {
             try {
                 ResponseEntity<GetCurrentPriceResponse> getCurrentPriceResponse = technicalDataService.getCurrentPrice(company.getTicker());
                 price = Objects.requireNonNull(getCurrentPriceResponse.getBody()).getPrice();
+
+                responseDataList.add(ResponseData.builder()
+                        .price(price)
+                        .companyName(company.getTitle())
+                        .ticker(company.getTicker())
+                        .latestBalanceSheetTerm(info.getBalanceSheetTerm())
+                        .pe(CalculateTools.priceToEarnings(price, info))
+                        .pb(CalculateTools.priceToBookRatio(price, info))
+                        .evToEbitda(CalculateTools.enterpriseValueToEbitda(price, info))
+                        .netDebtToEbitda(CalculateTools.netDebtToEbitda(info))
+                        .netCashPerShare(CalculateTools.netCashPerShare(info))
+                        .build());
             } catch (Exception ex) {
-                throw new StockValuationApiException("E999", "Fiyat bilgisi getirilirken bir hata oluştu: " + ex.getMessage());
+                log.error("{} için değerleme hesaplanırken bir hata oluştu, bu şirket listeye dahil değildir...", company.getTicker());
             }
-
-            responseDataList.add(ResponseData.builder()
-                    .price(price)
-                    .companyName(company.getTitle())
-                    .ticker(company.getTicker())
-                    .latestBalanceSheetTerm(info.getBalanceSheetTerm())
-                    .pe(CalculateTools.priceToEarnings(price, info))
-                    .pb(CalculateTools.priceToBookRatio(price, info))
-                    .evToEbitda(CalculateTools.enterpriseValueToEbitda(price, info))
-                    .netDebtToEbitda(CalculateTools.netDebtToEbitda(info))
-                    .netCashPerShare(info.getNetCashPerShare())
-                    .build());
-
             log.info("{} için değerleme işlemi tamamlandı.", company.getTicker());
         });
 
@@ -91,7 +90,6 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         } catch (IOException ex) {
             throw new StockValuationApiException(ResponseCodes.UNKNOWN_ERROR, ex.getMessage());
         }
-
     }
 
     private static XSSFWorkbook getExcelFile(String ticker) {
@@ -142,11 +140,11 @@ public class ValuationBusinessImpl implements ValuationBusiness {
         double initialCapital = CalculateTools.getFirstCellValue(sheet.getRow(86));
 
         double netDebt = (longTermFinancialDebts + shortTermFinancialDebts) - (cashAndEquivalents + financialInvestments);
-        double netCashPerShare = Precision.round(((cashAndEquivalents - totalLongTermLiabilities) / initialCapital), 2);
+        double netCash = Precision.round((cashAndEquivalents - totalLongTermLiabilities), 2);
 
         entity.setNetDebt(netDebt);
         entity.setEquity(equities);
-        entity.setNetCashPerShare(netCashPerShare);
+        entity.setNetCash(netCash);
         entity.setInitialCapital(initialCapital);
     }
 

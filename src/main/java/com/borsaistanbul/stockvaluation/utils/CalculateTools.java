@@ -26,8 +26,13 @@ public class CalculateTools {
         return Precision.round(valuationInfo.getNetDebt() / valuationInfo.getAnnualEbitda(), 2);
     }
 
+    public static double netCashPerShare(ValuationInfo info) {
+        return Precision.round(info.getNetCash() / info.getInitialCapital(), 2);
+    }
+
     public static double enterpriseValueToEbitda(double price, ValuationInfo valuationInfo) {
         double enterpriseValue = valuationInfo.getInitialCapital() * price + valuationInfo.getNetDebt();
-        return Precision.round(enterpriseValue / valuationInfo.getAnnualEbitda(), 2);
+        double evToEbitda =  Precision.round(enterpriseValue / valuationInfo.getAnnualEbitda(), 2);
+        return evToEbitda > 0 ? evToEbitda : Double.NaN;
     }
 }
