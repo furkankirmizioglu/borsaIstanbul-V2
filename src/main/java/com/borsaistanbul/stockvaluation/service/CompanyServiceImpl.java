@@ -48,6 +48,7 @@ public class CompanyServiceImpl implements CompanyService {
 
     private void readExcel() {
         try {
+
             List<CompanyInfo> toSaveList = new ArrayList<>();
             String fileLocation = ResourceUtils.getFile("classpath:static/companies.xlsx").toString();
             FileInputStream file = new FileInputStream(fileLocation);

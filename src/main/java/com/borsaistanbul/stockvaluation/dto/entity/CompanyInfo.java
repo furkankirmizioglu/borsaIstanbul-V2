@@ -4,10 +4,10 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-@Entity
-@Table(name = "COMPANY_INFO")
 @Getter
 @Setter
+@Entity
+@Table(name = "COMPANY_INFO")
 public class CompanyInfo {
     @Id
     @SequenceGenerator(name = "company_seq",

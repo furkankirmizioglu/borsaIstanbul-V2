@@ -1,4 +1,4 @@
-package com.borsaistanbul.stockvaluation.business.scoring;
+package com.borsaistanbul.stockvaluation.service;
 
 import com.borsaistanbul.stockvaluation.dto.model.ResponseData;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,16 +12,16 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ExtendWith(MockitoExtension.class)
-class StockScoreTest {
+class ScoringServiceTest {
 
-    private StockScoreImpl stockScore;
+    private ScoringService stockScore;
     private List<ResponseData> responseDataList;
     private static final String TEST = "TEST";
     private static final double DEFAULT_DOUBLE = 10.0;
 
     @BeforeEach
     void init() {
-        stockScore = new StockScoreImpl();
+        stockScore = new ScoringServiceImpl();
         responseDataList = new ArrayList<>();
 
         ResponseData responseData1 = ResponseData.builder()
@@ -70,7 +70,7 @@ class StockScoreTest {
 
     @Test
     void test() {
-        stockScore.scoring(responseDataList);
+        stockScore.sortAndScore(responseDataList);
         assertNotNull(responseDataList);
     }
 

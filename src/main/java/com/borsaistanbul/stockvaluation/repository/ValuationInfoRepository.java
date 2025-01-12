@@ -9,8 +9,6 @@ import java.util.Optional;
 @Repository
 public interface ValuationInfoRepository extends JpaRepository<ValuationInfo, Long> {
 
-
     Optional<ValuationInfo> findAllByTicker(String ticker);
-
 
 }
