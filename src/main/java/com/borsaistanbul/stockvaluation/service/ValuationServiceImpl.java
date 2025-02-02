@@ -73,6 +73,7 @@ public class ValuationServiceImpl implements ValuationService {
                         .evToEbitda(CalculateTools.enterpriseValueToEbitda(price, info))
                         .netDebtToEbitda(CalculateTools.netDebtToEbitda(info))
                         .netCashPerShare(CalculateTools.netCashPerShare(info))
+                        .marketValueToNetWorkingCapital(CalculateTools.marketValueToNetWorkingCapital(price, info))
                         .build());
 
                 log.info("{} için değerleme işlemi tamamlandı.", company.getTicker());
@@ -137,7 +138,9 @@ public class ValuationServiceImpl implements ValuationService {
 
         double cashAndEquivalents = CalculateTools.getFirstCellValue(sheet.getRow(2));
         double financialInvestments = CalculateTools.getFirstCellValue(sheet.getRow(4));
+        double totalCurrentAssets = CalculateTools.getFirstCellValue(sheet.getRow(23));
         double shortTermFinancialDebts = CalculateTools.getFirstCellValue(sheet.getRow(49));
+        double totalShortTermLiabilities = CalculateTools.getFirstCellValue(sheet.getRow(65));
         double longTermFinancialDebts = CalculateTools.getFirstCellValue(sheet.getRow(67));
         double totalLongTermLiabilities = CalculateTools.getFirstCellValue(sheet.getRow(83));
         double equities = CalculateTools.getFirstCellValue(sheet.getRow(85));
@@ -145,10 +148,12 @@ public class ValuationServiceImpl implements ValuationService {
 
         double netDebt = (longTermFinancialDebts + shortTermFinancialDebts) - (cashAndEquivalents + financialInvestments);
         double netCash = Precision.round((cashAndEquivalents - totalLongTermLiabilities), 2);
+        double netWorkingCapital = Precision.round(totalCurrentAssets - totalShortTermLiabilities, 2);
 
         entity.setNetDebt(netDebt);
         entity.setEquity(equities);
         entity.setNetCash(netCash);
+        entity.setNetWorkingCapital(netWorkingCapital);
         entity.setInitialCapital(initialCapital);
     }
 

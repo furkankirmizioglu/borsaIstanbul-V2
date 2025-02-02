@@ -14,15 +14,13 @@ public class ScoringServiceImpl implements ScoringService {
     @Override
     public List<ResponseData> sortAndScore(List<ResponseData> resultList) {
 
-        if (Objects.isNull(resultList) || resultList.isEmpty()) {
-            return resultList;
-        }
-
         Map<String, Comparator<ResponseData>> criteria = Map.of(
                 "evToEbitda", Comparator.comparing(ResponseData::getEvToEbitda),
                 "priceToBook", Comparator.comparing(ResponseData::getPb),
                 "netDebtToEbitda", Comparator.comparing(ResponseData::getNetDebtToEbitda),
-                "netCashPerShare", Comparator.comparing(ResponseData::getNetCashPerShare));
+                "netCashPerShare", Comparator.comparing(ResponseData::getNetCashPerShare).reversed(),
+                "marketValueToNetWorkingCapital", Comparator.comparing(ResponseData::getMarketValueToNetWorkingCapital).reversed()
+        );
 
         Map<String, Map<ResponseData, Integer>> indexMaps = new HashMap<>();
 
@@ -36,7 +34,9 @@ public class ScoringServiceImpl implements ScoringService {
         int listSize = resultList.size();
 
         resultList.forEach(info -> {
-            double finalScore = indexMaps.values().stream().mapToInt(map -> listSize - map.get(info)).sum();
+            double finalScore = indexMaps.values().stream()
+                    .mapToInt(map -> listSize - map.getOrDefault(info, listSize))
+                    .sum();
             double percentageScore = (finalScore / (listSize * criteriaCount)) * 100;
             info.setFinalScore(Precision.round(percentageScore, 0));
             info.setSuggestion(makeSuggestion(info.getFinalScore()));
@@ -49,21 +49,23 @@ public class ScoringServiceImpl implements ScoringService {
 
     private Map<ResponseData, Integer> createIndexMap(List<ResponseData> sortedList) {
         Map<ResponseData, Integer> indexMap = new HashMap<>();
-        sortedList.forEach(element -> indexMap.put(element, sortedList.indexOf(element)));
+        for (int i = 0; i < sortedList.size(); i++) {
+            indexMap.put(sortedList.get(i), i);
+        }
         return indexMap;
     }
 
     private String makeSuggestion(double score) {
         if (score >= 85) {
-            return (STRONG_BUY.label);
+            return STRONG_BUY.label;
         } else if (score >= 70) {
-            return (BUY.label);
+            return BUY.label;
         } else if (score >= 55) {
-            return (NEUTRAL.label);
+            return NEUTRAL.label;
         } else if (score >= 40) {
-            return (SELL.label);
+            return SELL.label;
         } else {
-            return (STRONG_SELL.label);
+            return STRONG_SELL.label;
         }
     }
 }

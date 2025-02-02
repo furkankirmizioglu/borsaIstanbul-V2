@@ -17,6 +17,7 @@ public class ResponseData {
     private double evToEbitda;
     private double netDebtToEbitda;
     private double netCashPerShare;
+    private double marketValueToNetWorkingCapital;
     private double finalScore;
     private String suggestion;
 }

@@ -42,4 +42,7 @@ public class ValuationInfo {
 
     @Column(name = "NET_CASH")
     private double netCash;
+
+    @Column(name = "NET_WORKING_CAPITAL")
+    private double netWorkingCapital;
 }

@@ -32,7 +32,12 @@ public class CalculateTools {
 
     public static double enterpriseValueToEbitda(double price, ValuationInfo valuationInfo) {
         double enterpriseValue = valuationInfo.getInitialCapital() * price + valuationInfo.getNetDebt();
-        double evToEbitda =  Precision.round(enterpriseValue / valuationInfo.getAnnualEbitda(), 2);
+        double evToEbitda = Precision.round(enterpriseValue / valuationInfo.getAnnualEbitda(), 2);
         return evToEbitda > 0 ? evToEbitda : Double.NaN;
     }
+
+    public static double marketValueToNetWorkingCapital(double price, ValuationInfo info) {
+        return Precision.round((price * info.getInitialCapital()) / info.getNetWorkingCapital(), 2);
+    }
+
 }
