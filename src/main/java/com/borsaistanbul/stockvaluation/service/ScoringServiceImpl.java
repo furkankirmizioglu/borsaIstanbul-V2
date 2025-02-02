@@ -19,7 +19,7 @@ public class ScoringServiceImpl implements ScoringService {
                 "priceToBook", Comparator.comparing(ResponseData::getPb),
                 "netDebtToEbitda", Comparator.comparing(ResponseData::getNetDebtToEbitda),
                 "netCashPerShare", Comparator.comparing(ResponseData::getNetCashPerShare).reversed(),
-                "marketValueToNetWorkingCapital", Comparator.comparing(ResponseData::getMarketValueToNetWorkingCapital).reversed()
+                "marketValueToNetWorkingCapital", Comparator.comparing(ResponseData::getMarketValueToNetWorkingCapital)
         );
 
         Map<String, Map<ResponseData, Integer>> indexMaps = new HashMap<>();
